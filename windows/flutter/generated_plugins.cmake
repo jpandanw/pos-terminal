@@ -3,9 +3,13 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_thermal_printer
+  printing
+  universal_ble
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  printing_ffi
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
