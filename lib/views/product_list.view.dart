@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pos_terminal/states/held_transaction.state.dart';
 import 'package:pos_terminal/states/load_data.state.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
 import 'package:pos_terminal/types/product.type.dart';
+import 'package:pos_terminal/views/make_transactions_actions.view.dart';
 import 'package:signals/signals_flutter.dart';
 
 final _selectedCategory = signal<Category?>(null);
@@ -78,32 +80,7 @@ class ProductListView extends StatelessWidget {
           }),
         ),
         Divider(),
-        SizedBox(
-          height: 64,
-          child: Flex(
-            direction: Axis.horizontal,
-            spacing: 8,
-            children: [
-              FilledButton.icon(
-                onPressed: () {},
-                label: const Text("Hold Transaction"),
-                icon: Icon(Icons.holiday_village),
-              ),
-
-              FilledButton.icon(
-                onPressed: () {},
-                label: const Text("Restore Transactions"),
-                icon: Icon(Icons.holiday_village),
-              ),
-
-              FilledButton.icon(
-                onPressed: () {},
-                label: const Text("Clear Cart"),
-                icon: Icon(Icons.holiday_village),
-              ),
-            ],
-          ),
-        ),
+        SizedBox(height: 64, child: const MakeTransactionsActionsView()),
       ],
     );
   }

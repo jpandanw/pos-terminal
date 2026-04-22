@@ -8,7 +8,12 @@ final makeTransactionRef = Ref.scoped((context) => MakeTransactionState());
 class MakeTransactionState implements Disposable {
   final cart = listSignal<TransactionItem>([]);
   final modifiers = listSignal<TransactionModifier>([]);
-  final heldCarts = listSignal<List<TransactionItem>>([]);
+  final customerMoney = signal<double?>(null);
+
+  late final change = computed<double?>(() {
+    if (customerMoney.value == null) return null;
+    return customerMoney.value! - overallTotal.value;
+  });
 
   late final cartTotal = computed<double>(
     () => cart.fold(
@@ -17,20 +22,17 @@ class MakeTransactionState implements Disposable {
     ),
   );
 
-  void holdCurrentCart() {
-    if (cart.isEmpty) return;
-    heldCarts.add([...cart]);
-    cart.clear();
-  }
-
-  void resumeCart(int index) {
-    if (index < 0 || index >= heldCarts.length) return;
-    final held = heldCarts.removeAt(index);
-    if (cart.isNotEmpty) {
-      heldCarts.add([...cart]);
+  late final overallTotal = computed<double>(() {
+    double total = cartTotal.value;
+    for (final modifier in modifiers) {
+      if (modifier.type == TransactionModifierType.percentage) {
+        total += cartTotal.value * (modifier.amount / 100);
+      } else {
+        total += modifier.amount;
+      }
     }
-    cart.value = held;
-  }
+    return total;
+  });
 
   void addToCart({required Product product, required int quantity}) {
     final existingIndex = indexOf(product: product);
@@ -52,7 +54,24 @@ class MakeTransactionState implements Disposable {
     cart.removeAt(index);
   }
 
-  void setQuantity({required Product product, required int quauntity}) {}
+  void setQuantity({required Product product, required int quantity}) {
+    if (quantity <= 0) {
+      removeFromCart(product: product);
+      return;
+    }
+    final existingIndex = indexOf(product: product);
+    if (existingIndex >= 0) {
+      cart[existingIndex] = cart[existingIndex].copyWith(quantity: quantity);
+    } else {
+      cart.add(TransactionItem(product: product, quantity: quantity));
+    }
+  }
+
+  void startNewTransaction() {
+    cart.clear();
+    modifiers.clear();
+    customerMoney.value = null;
+  }
 
   bool inCart({required Product product}) =>
       cart.any((i) => product.id == i.product.id);
@@ -64,7 +83,8 @@ class MakeTransactionState implements Disposable {
   void dispose() {
     cart.dispose();
     modifiers.dispose();
-    heldCarts.dispose();
     cartTotal.dispose();
+    overallTotal.dispose();
+    customerMoney.dispose();
   }
 }

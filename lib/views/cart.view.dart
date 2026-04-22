@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
-import 'package:pos_terminal/views/reciept.view.dart';
+import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
+import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
+import 'package:pos_terminal/views/total.view.dart';
 import 'package:signals/signals_flutter.dart';
 
 @immutable
@@ -31,131 +33,30 @@ class CartView extends StatelessWidget {
         ),
 
         const Divider(),
-        Flexible(
-          flex: 3,
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Total:"),
-                  Watch(
-                    (_) => Text(
-                      "P${cartState.cartTotal.value.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontFamily: "monospace",
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        Flexible(flex: 3, child: Column(children: [const TotalView()])),
         Padding(
           padding: const EdgeInsets.only(top: 16.0),
           child: Watch(
-            (_) => Row(
-              children: [
-                if (cartState.heldCarts.isNotEmpty) ...[
-                  OutlinedButton.icon(
-                    onPressed: () => _showHeldCartsDialog(context, cartState),
-                    icon: const Icon(Icons.list_alt),
-                    label: Text("Held (${cartState.heldCarts.length})"),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: cartState.cart.isEmpty
-                        ? null
-                        : () => cartState.holdCurrentCart(),
-                    child: const Text("Hold Cart"),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: cartState.cart.isEmpty
-                        ? null
-                        : () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RecieptView(),
-                              ),
-                            );
-                          },
-                    child: const Text("COMPLETE TRANSACTION"),
-                  ),
-                ),
-              ],
+            (context) => SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: cartState.cart.isEmpty
+                    ? null
+                    : () {
+                        cartState.customerMoney.value = null; // reset
+                        showDialog(
+                          context: context,
+                          builder: (context) => const CustomerMoneyDialog(),
+                        );
+                      },
+                child: const Text("COMPLETE TRANSACTION"),
+              ),
             ),
           ),
         ),
       ],
     );
   }
-}
-
-Future<void> _showHeldCartsDialog(
-  BuildContext context,
-  MakeTransactionState cartState,
-) {
-  return showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text("Held Transactions"),
-        content: SizedBox(
-          width: 500,
-          child: Watch((_) {
-            if (cartState.heldCarts.isEmpty) {
-              return const Text("No held transactions.");
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: cartState.heldCarts.length,
-              itemBuilder: (context, index) {
-                final held = cartState.heldCarts[index];
-                final totalItems = held.fold<int>(
-                  0,
-                  (acc, item) => acc + item.quantity,
-                );
-                final totalCost = held.fold<double>(
-                  0.0,
-                  (acc, item) => acc + (item.product.price * item.quantity),
-                );
-                return ListTile(
-                  title: Text(
-                    "Cart #${index + 1} - $totalItems items",
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text("Total: P${totalCost.toStringAsFixed(2)}"),
-                  trailing: FilledButton(
-                    onPressed: () {
-                      cartState.resumeCart(index);
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Resume"),
-                  ),
-                );
-              },
-            );
-          }),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Close"),
-          ),
-        ],
-      );
-    },
-  );
 }
 
 class _CartTable extends StatelessWidget {
@@ -241,7 +142,27 @@ class _CartTable extends StatelessWidget {
                         cartState.removeFromCart(product: c.$2.product),
                       },
                     ),
-                    Text(c.$2.quantity.toString()),
+                    InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => ChangeQuantityDialog(
+                            product: c.$2.product,
+                            currentQuantity: c.$2.quantity,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Text(
+                          c.$2.quantity.toString(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
                     ElevatedButton(
                       onPressed: () {
                         cartState.addToCart(product: c.$2.product, quantity: 1);
