@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ref/lite_ref.dart';
+import 'package:pos_terminal/data/server/login.dart' as login_api;
 import 'package:pos_terminal/states/load_data.state.dart';
 import 'package:pos_terminal/states/products_loaded.state.dart';
 import 'package:pos_terminal/types/auth.type.dart';
@@ -10,17 +11,49 @@ class AuthState extends Disposable {
   AuthState(this.context);
 
   final cashier = signal<Cashier?>(null);
+  final isReady = signal<bool>(false);
 
-  Future login({required String username, required String password}) async {
-    await fetchDataRef(context).load();
-    productsLoadedRef(context).load(fetchDataRef(context).products.value);
+  Future<void> login({required String email, required String password}) async {
+    // Reset ready state
+    isReady.value = false;
 
-    cashier.value = Cashier(id: "CASHIER-1", name: "JAMEI PABLO");
+    // Call the login API
+    final result = await login_api.login(email: email, password: password);
+
+    // Handle the result
+    await result.fold(
+      (success) async {
+        // Set cashier info first
+        cashier.value = Cashier(
+          id: success.id,
+          name: success.name,
+          email: success.email,
+        );
+
+        // Load all required data before marking as ready
+        await fetchDataRef(context).load();
+        productsLoadedRef(context).load(fetchDataRef(context).products.value);
+
+        // Now mark as ready to show the main app
+        isReady.value = true;
+      },
+      (failure) {
+        // Handle login failure - you might want to show a snackbar or dialog
+        debugPrint('Login failed: $failure');
+        throw failure;
+      },
+    );
+  }
+
+  void logout() {
+    cashier.value = null;
+    isReady.value = false;
   }
 
   @override
   void dispose() {
     cashier.dispose();
+    isReady.dispose();
   }
 }
 

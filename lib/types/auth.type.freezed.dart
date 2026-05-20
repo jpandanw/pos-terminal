@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Cashier {
 
- String get id; String get name;
+ String get id; String get name; String get email;
 /// Create a copy of Cashier
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CashierCopyWith<Cashier> get copyWith => _$CashierCopyWithImpl<Cashier>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cashier&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cashier&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name);
+int get hashCode => Object.hash(runtimeType,id,name,email);
 
 @override
 String toString() {
-  return 'Cashier(id: $id, name: $name)';
+  return 'Cashier(id: $id, name: $name, email: $email)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CashierCopyWith<$Res>  {
   factory $CashierCopyWith(Cashier value, $Res Function(Cashier) _then) = _$CashierCopyWithImpl;
 @useResult
 $Res call({
- String id, String name
+ String id, String name, String email
 });
 
 
@@ -62,10 +62,11 @@ class _$CashierCopyWithImpl<$Res>
 
 /// Create a copy of Cashier
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -151,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String email)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Cashier() when $default != null:
-return $default(_that.id,_that.name);case _:
+return $default(_that.id,_that.name,_that.email);case _:
   return orElse();
 
 }
@@ -172,10 +173,10 @@ return $default(_that.id,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String email)  $default,) {final _that = this;
 switch (_that) {
 case _Cashier():
-return $default(_that.id,_that.name);case _:
+return $default(_that.id,_that.name,_that.email);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +193,10 @@ return $default(_that.id,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String email)?  $default,) {final _that = this;
 switch (_that) {
 case _Cashier() when $default != null:
-return $default(_that.id,_that.name);case _:
+return $default(_that.id,_that.name,_that.email);case _:
   return null;
 
 }
@@ -207,11 +208,12 @@ return $default(_that.id,_that.name);case _:
 
 
 class _Cashier implements Cashier {
-  const _Cashier({required this.id, required this.name});
+  const _Cashier({required this.id, required this.name, required this.email});
   
 
 @override final  String id;
 @override final  String name;
+@override final  String email;
 
 /// Create a copy of Cashier
 /// with the given fields replaced by the non-null parameter values.
@@ -223,16 +225,16 @@ _$CashierCopyWith<_Cashier> get copyWith => __$CashierCopyWithImpl<_Cashier>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cashier&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cashier&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name);
+int get hashCode => Object.hash(runtimeType,id,name,email);
 
 @override
 String toString() {
-  return 'Cashier(id: $id, name: $name)';
+  return 'Cashier(id: $id, name: $name, email: $email)';
 }
 
 
@@ -243,7 +245,7 @@ abstract mixin class _$CashierCopyWith<$Res> implements $CashierCopyWith<$Res> {
   factory _$CashierCopyWith(_Cashier value, $Res Function(_Cashier) _then) = __$CashierCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name
+ String id, String name, String email
 });
 
 
@@ -260,10 +262,11 @@ class __$CashierCopyWithImpl<$Res>
 
 /// Create a copy of Cashier
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,}) {
   return _then(_Cashier(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

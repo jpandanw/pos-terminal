@@ -9,6 +9,8 @@ class MakeTransactionState implements Disposable {
   final cart = listSignal<TransactionItem>([]);
   final modifiers = listSignal<TransactionModifier>([]);
   final customerMoney = signal<double?>(null);
+  final customerId = signal<String?>(null);
+  final customerName = signal<String?>(null);
 
   late final change = computed<double?>(() {
     if (customerMoney.value == null) return null;
@@ -71,6 +73,8 @@ class MakeTransactionState implements Disposable {
     cart.clear();
     modifiers.clear();
     customerMoney.value = null;
+    customerId.value = null;
+    customerName.value = null;
   }
 
   bool inCart({required Product product}) =>
@@ -86,5 +90,7 @@ class MakeTransactionState implements Disposable {
     cartTotal.dispose();
     overallTotal.dispose();
     customerMoney.dispose();
+    customerId.dispose();
+    customerName.dispose();
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
 import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
 import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
+import 'package:pos_terminal/views/dialogs/customer_card.dialog.dart';
 import 'package:pos_terminal/views/total.view.dart';
 import 'package:signals/signals_flutter.dart';
 
@@ -35,22 +36,58 @@ class CartView extends StatelessWidget {
         const Divider(),
         Flexible(flex: 3, child: Column(children: [const TotalView()])),
         Padding(
-          padding: const EdgeInsets.only(top: 16.0),
+          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
           child: Watch(
-            (context) => SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: cartState.cart.isEmpty
-                    ? null
-                    : () {
-                        cartState.customerMoney.value = null; // reset
-                        showDialog(
-                          context: context,
-                          builder: (context) => const CustomerMoneyDialog(),
-                        );
-                      },
-                child: const Text("COMPLETE TRANSACTION"),
-              ),
+            (context) => Column(
+              children: [
+                if (cartState.customerName.value != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Customer:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(cartState.customerName.value!),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 16),
+                          onPressed: () {
+                            cartState.customerId.value = null;
+                            cartState.customerName.value = null;
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const CustomerCardDialog(),
+                      );
+                    },
+                    icon: const Icon(Icons.credit_card),
+                    label: Text(cartState.customerName.value == null ? "ADD CUSTOMER CARD" : "CHANGE CUSTOMER CARD"),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: cartState.cart.isEmpty
+                        ? null
+                        : () {
+                            cartState.customerMoney.value = null; // reset
+                            showDialog(
+                              context: context,
+                              builder: (context) => const CustomerMoneyDialog(),
+                            );
+                          },
+                    child: const Text("COMPLETE TRANSACTION"),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -58,6 +95,7 @@ class CartView extends StatelessWidget {
     );
   }
 }
+
 
 class _CartTable extends StatelessWidget {
   const _CartTable({required this.cartState});

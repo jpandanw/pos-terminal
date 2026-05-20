@@ -9,8 +9,6 @@ final dio = Dio();
 AsyncResult<List<Product>> fetchProducts() async {
   final response = await dio.get("$API_URL/products");
 
-  debugPrint(response.data.toString());
-
   final products = (response.data as List).map(
     (i) => Product(
       id: i['id'],
@@ -20,7 +18,7 @@ AsyncResult<List<Product>> fetchProducts() async {
       barcode: i['barcode'],
       sku: i['sku'],
       categories: (i['categories'] as List)
-          .map((c) => Category(id: i['id'], name: i['name']))
+          .map((c) => Category(id: c['id'], name: c['name']))
           .toList(),
       priceModifiers: (i['priceModifiers'] as List)
           .map(
@@ -36,6 +34,8 @@ AsyncResult<List<Product>> fetchProducts() async {
           .toList(),
     ),
   );
+
+  debugPrint("Products fetched: ${products.toList()}");
 
   return products.toList().toSuccess();
 }

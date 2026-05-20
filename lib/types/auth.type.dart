@@ -4,5 +4,9 @@ part 'auth.type.freezed.dart';
 
 @freezed
 abstract class Cashier with _$Cashier {
-  const factory Cashier({required String id, required String name}) = _Cashier;
+  const factory Cashier({
+    required String id,
+    required String name,
+    required String email,
+  }) = _Cashier;
 }

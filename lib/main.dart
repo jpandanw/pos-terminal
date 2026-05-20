@@ -1,27 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ref/lite_ref.dart';
 import 'package:pos_terminal/states/auth.state.dart';
+import 'package:pos_terminal/states/hardware.state.dart';
 import 'package:pos_terminal/views/login.view.dart';
 import 'package:pos_terminal/views/make_transaction.view.dart';
+import 'package:pos_terminal/views/register.view.dart';
 import 'package:signals/signals_flutter.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const LiteRefScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      title: 'POS Terminal',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
       home: SafeArea(
-        child: Watch(
-          (_) => authStateRef(context).cashier.value == null
-              ? LoginView()
-              : MakeTransactionView(),
+        child: Builder(
+          builder: (context) {
+            // Kick off init once
+            if (!_initialized) {
+              _initialized = true;
+              Future.microtask(() => startupStateRef(context).init());
+            }
+
+            return Watch((_) {
+              final regStatus = startupStateRef(context).status.value;
+
+              return switch (regStatus) {
+                RegistrationStatus.loading => const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+                RegistrationStatus.notRegistered => const RegisterView(),
+                RegistrationStatus.error => Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Failed to check registration",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          startupStateRef(context).errorMessage.value ??
+                              "Unknown error",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed: () => startupStateRef(context).init(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text("RETRY"),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                RegistrationStatus.registered => Watch((_) {
+                  final authState = authStateRef(context);
+                  final isLoggedIn = authState.cashier.value != null;
+                  final isReady = authState.isReady.value;
+
+                  if (!isLoggedIn) {
+                    return const LoginView();
+                  }
+
+                  if (isLoggedIn && !isReady) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Loading data...'),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return const MakeTransactionView();
+                }),
+              };
+            });
+          },
         ),
       ),
     );
