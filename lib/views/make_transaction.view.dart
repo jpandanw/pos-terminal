@@ -4,7 +4,9 @@ import 'package:pos_terminal/states/auth.state.dart';
 import 'package:pos_terminal/states/load_data.state.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
 import 'package:pos_terminal/states/products_loaded.state.dart';
+import 'package:pos_terminal/states/restriction.state.dart';
 import 'package:pos_terminal/views/cart.view.dart';
+import 'package:pos_terminal/views/dialogs/supervisor_validation.dialog.dart';
 import 'package:pos_terminal/views/product_list.view.dart';
 import 'package:signals/signals_flutter.dart';
 
@@ -25,6 +27,8 @@ class MakeTransactionView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: [
+                  const _RestrictionStatusIndicator(),
+                  const SizedBox(width: 16),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -113,5 +117,97 @@ class MakeTransactionView extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _RestrictionStatusIndicator extends StatelessWidget {
+  const _RestrictionStatusIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final restriction = restrictionStateRef(context);
+    final theme = Theme.of(context);
+
+    return Watch((_) {
+      final isBypassed = restriction.bypassType.value != BypassType.none;
+      final text = restriction.statusText;
+      final colorScheme = theme.colorScheme;
+
+      return Tooltip(
+        message: isBypassed 
+            ? "Supervisor authorization is active. Tap 'X' to lock." 
+            : "Click to pre-authorize with supervisor credentials.",
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isBypassed 
+                ? Colors.green.withOpacity(0.15) 
+                : colorScheme.outlineVariant.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isBypassed 
+                  ? Colors.green.withOpacity(0.4) 
+                  : colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              if (!isBypassed) {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => SupervisorValidationDialog(
+                    actionDescription: "pre-authorize remove/reduce operations",
+                    onSuccess: () {},
+                  ),
+                );
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isBypassed ? Icons.lock_open_outlined : Icons.lock_outline,
+                    color: isBypassed ? Colors.green[700] : colorScheme.onSurfaceVariant,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isBypassed ? Colors.green[800] : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (isBypassed) ...[
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => restriction.clearBypass(),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.green[700]?.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 12,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 }

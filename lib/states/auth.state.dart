@@ -4,6 +4,7 @@ import 'package:pos_terminal/data/server/login.dart' as login_api;
 import 'package:pos_terminal/states/load_data.state.dart';
 import 'package:pos_terminal/states/products_loaded.state.dart';
 import 'package:pos_terminal/types/auth.type.dart';
+import 'package:pos_terminal/states/restriction.state.dart';
 import 'package:signals/signals_flutter.dart';
 
 class AuthState extends Disposable {
@@ -48,6 +49,7 @@ class AuthState extends Disposable {
   void logout() {
     cashier.value = null;
     isReady.value = false;
+    restrictionStateRef(context).clearBypass();
   }
 
   @override
