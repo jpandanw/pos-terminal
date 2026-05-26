@@ -102,23 +102,51 @@ class CartView extends StatelessWidget {
 }
 
 
-class _CartTable extends StatelessWidget {
+class _CartTable extends StatefulWidget {
   const _CartTable({required this.cartState});
 
   final MakeTransactionState cartState;
 
   @override
+  State<_CartTable> createState() => _CartTableState();
+}
+
+class _CartTableState extends State<_CartTable> {
+  final Map<int, GlobalKey> _rowKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    effect(() {
+      final index = widget.cartState.cartCursorIndex.value;
+      if (_rowKeys.containsKey(index)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final context = _rowKeys[index]?.currentContext;
+          if (context != null) {
+            Scrollable.ensureVisible(
+              context,
+              alignment: 0.5,
+              duration: const Duration(milliseconds: 200),
+            );
+          }
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Watch(
-      (_) => Table(
-        columnWidths: const {
-          0: FixedColumnWidth(24),
-          1: FlexColumnWidth(),
-          2: FlexColumnWidth(),
-          3: FlexColumnWidth(),
-          4: FlexColumnWidth(),
-        },
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      (_) => SingleChildScrollView(
+        child: Table(
+          columnWidths: const {
+            0: FixedColumnWidth(24),
+            1: FlexColumnWidth(),
+            2: FlexColumnWidth(),
+            3: FlexColumnWidth(),
+            4: FlexColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: [
           const TableRow(
             children: [
@@ -138,10 +166,12 @@ class _CartTable extends StatelessWidget {
               TableCell(child: Divider()),
             ],
           ),
-          ...cartState.cart.indexed.map(
-            (c) => TableRow(
+          ...widget.cartState.cart.indexed.map((c) {
+            final key = _rowKeys.putIfAbsent(c.$1, () => GlobalKey());
+            return TableRow(
+              key: key,
               decoration: BoxDecoration(
-                color: c.$1 == cartState.cartCursorIndex.value
+                color: c.$1 == widget.cartState.cartCursorIndex.value
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                     : null,
               ),
@@ -216,10 +246,11 @@ class _CartTable extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          }),
         ],
       ),
+    ),
     );
   }
 }

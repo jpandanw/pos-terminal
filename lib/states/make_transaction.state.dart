@@ -43,14 +43,19 @@ class MakeTransactionState implements Disposable {
       cart[existingIndex] = cart[existingIndex].copyWith(
         quantity: cart[existingIndex].quantity + quantity,
       );
+      cartCursorIndex.value = existingIndex;
       return;
     }
 
     cart.add(TransactionItem(product: product, quantity: quantity));
+    cartCursorIndex.value = cart.length - 1;
   }
 
   void removeFromCart({required Product product}) {
     cart.value = cart.where((i) => i.product.id != product.id).toList();
+    if (cartCursorIndex.value >= cart.length) {
+      cartCursorIndex.value = cart.isNotEmpty ? cart.length - 1 : 0;
+    }
   }
 
   void removeFromCartByIndex(int index) {
