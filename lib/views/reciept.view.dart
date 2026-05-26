@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -37,20 +38,26 @@ class RecieptView extends StatelessWidget {
 
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
+        pageFormat: PdfPageFormat(
+          72.1 * PdfPageFormat.mm,
+          double.infinity,
+          marginAll: 5 * PdfPageFormat.mm,
+        ),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
                 child: pw.Text(
-                  "<POINT OF SALE>",
+                  "XM GROCERY",
                   style: pw.TextStyle(
-                    fontSize: 14,
+                    fontSize: 10,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
               ),
+
+              pw.Text("Purok 1, Sayre Highway, Kisolon, Sumilao, Bukidnon"),
               pw.SizedBox(height: 10),
               pw.Text("Date: $formattedDate"),
               pw.Text("Receipt No: $transactionId"),
@@ -103,17 +110,11 @@ class RecieptView extends StatelessWidget {
                 children: [
                   pw.Text(
                     "Total Amount:",
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   ),
                   pw.Text(
                     "P${cartState.overallTotal.value.toStringAsFixed(2)}",
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 10,
-                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   ),
                 ],
               ),
@@ -162,7 +163,10 @@ class RecieptView extends StatelessWidget {
 
           return SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -173,8 +177,8 @@ class RecieptView extends StatelessWidget {
                       Text(
                         'Printer Settings',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
@@ -185,7 +189,9 @@ class RecieptView extends StatelessWidget {
                   const Divider(height: 24),
                   Card(
                     elevation: 0,
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceVariant.withOpacity(0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
@@ -207,12 +213,18 @@ class RecieptView extends StatelessWidget {
                           child: Icon(
                             Icons.print,
                             color: printer != null
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         title: Text(
-                          printer != null ? printer.name : 'No printer selected',
+                          printer != null
+                              ? printer.name
+                              : 'No printer selected',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
@@ -223,7 +235,10 @@ class RecieptView extends StatelessWidget {
                         isThreeLine: printer != null,
                         trailing: printer != null
                             ? IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () async {
                                   await printerState.clearSavedPrinter();
                                 },
@@ -238,7 +253,11 @@ class RecieptView extends StatelessWidget {
                       await printerState.pickAndSavePrinter();
                     },
                     icon: const Icon(Icons.search),
-                    label: Text(printer == null ? 'Select / Pick Printer' : 'Change Printer'),
+                    label: Text(
+                      printer == null
+                          ? 'Select / Pick Printer'
+                          : 'Change Printer',
+                    ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -254,7 +273,9 @@ class RecieptView extends StatelessWidget {
                         'Direct Printing',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      subtitle: const Text('Bypass system dialog and print directly'),
+                      subtitle: const Text(
+                        'Bypass system dialog and print directly',
+                      ),
                       value: direct,
                       onChanged: (val) async {
                         await printerState.setUseDirectPrint(val);
@@ -275,66 +296,157 @@ class RecieptView extends StatelessWidget {
     // Proactively initialize printer state
     printerStateRef(context).init();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Reciept"),
-        actions: [
-          Watch((context) {
-            final printer = printerStateRef(context).selectedPrinter.value;
-            final direct = printerStateRef(context).useDirectPrint.value;
-            return IconButton(
-              icon: Icon(
-                printer == null
-                    ? Icons.print_disabled_outlined
-                    : (direct ? Icons.print : Icons.print_outlined),
-                color: printer == null
-                    ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context).colorScheme.primary,
-              ),
-              tooltip: printer == null
-                  ? "Select printer"
-                  : "Printer: ${printer.name} (${direct ? 'Direct' : 'Dialog'})",
-              onPressed: () => _showPrinterSettings(context),
-            );
-          }),
-        ],
-      ),
-      body: PdfPreview(
-        initialPageFormat: PdfPageFormat.roll57,
-        maxPageWidth: 400,
-        useActions: false,
-        build: (format) async {
-          final doc = await generateReciept(context);
-          return doc.save();
-        },
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: "print",
-            onPressed: () async {
-              final doc = await generateReciept(context);
-              await printerStateRef(context).printDocument(doc, name: 'Receipt');
-            },
-            icon: const Icon(Icons.print),
-            label: const Text("Print Receipt"),
-          ),
-          const SizedBox(height: 16),
-          FloatingActionButton.extended(
-            heroTag: "print_new",
-            onPressed: () async {
-              final doc = await generateReciept(context);
-              await printerStateRef(context).printDocument(doc, name: 'Receipt');
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+        if (event.logicalKey == LogicalKeyboardKey.enter) {
+          if (HardwareKeyboard.instance.isShiftPressed) {
+            // SHIFT + ENTER to make new transaction (no printing)
+            makeTransactionRef(context).startNewTransaction();
+            if (context.mounted) Navigator.pop(context);
+            return KeyEventResult.handled;
+          } else {
+            // ENTER to print and new
+            generateReciept(context).then((doc) async {
+              await printerStateRef(
+                context,
+              ).printDocument(doc, name: 'Receipt');
               makeTransactionRef(context).startNewTransaction();
               if (context.mounted) Navigator.pop(context);
-            },
-            icon: const Icon(Icons.check),
-            label: const Text("Print & New Transaction"),
+            });
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Reciept"),
+          actions: [
+            Watch((context) {
+              final printer = printerStateRef(context).selectedPrinter.value;
+              final direct = printerStateRef(context).useDirectPrint.value;
+              return IconButton(
+                icon: Icon(
+                  printer == null
+                      ? Icons.print_disabled_outlined
+                      : (direct ? Icons.print : Icons.print_outlined),
+                  color: printer == null
+                      ? Theme.of(context).colorScheme.outline
+                      : Theme.of(context).colorScheme.primary,
+                ),
+                tooltip: printer == null
+                    ? "Select printer"
+                    : "Printer: ${printer.name} (${direct ? 'Direct' : 'Dialog'})",
+                onPressed: () => _showPrinterSettings(context),
+              );
+            }),
+          ],
+        ),
+        body: PdfPreview(
+          initialPageFormat: PdfPageFormat(
+            72.1 * PdfPageFormat.mm,
+            double.infinity,
+            marginAll: 5 * PdfPageFormat.mm,
           ),
-        ],
+          maxPageWidth: 400,
+          useActions: false,
+          build: (format) async {
+            final doc = await generateReciept(context);
+            return doc.save();
+          },
+        ),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: "print",
+              onPressed: () async {
+                final doc = await generateReciept(context);
+                await printerStateRef(
+                  context,
+                ).printDocument(doc, name: 'Receipt');
+              },
+              icon: const Icon(Icons.print),
+              label: const Text("Print Receipt"),
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton.extended(
+              heroTag: "print_new",
+              onPressed: () async {
+                final doc = await generateReciept(context);
+                await printerStateRef(
+                  context,
+                ).printDocument(doc, name: 'Receipt');
+                makeTransactionRef(context).startNewTransaction();
+                if (context.mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.check),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "ENTER",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                  ),
+                  const Text("Print & New Transaction"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton.extended(
+              heroTag: "new_transaction",
+              onPressed: () {
+                makeTransactionRef(context).startNewTransaction();
+                if (context.mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "SHIFT + ENTER",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                  ),
+                  const Text("Make New Transaction"),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

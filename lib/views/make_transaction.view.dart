@@ -226,14 +226,8 @@ class MakeTransactionView extends StatelessWidget {
             return KeyEventResult.handled;
           }
 
-          // F6 or ENTER to set quantity
-          if (event.logicalKey == LogicalKeyboardKey.f6 ||
-              (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isControlPressed)) {
-            // Wait, if searchFocusNode is focused, enter is handled by SearchBar onSubmitted.
-            // We shouldn't capture ENTER if search is focused.
-            if (searchFocusNode.hasFocus && event.logicalKey == LogicalKeyboardKey.enter) {
-              return KeyEventResult.ignored; // Let SearchBar handle it
-            }
+          // F6 to set quantity
+          if (event.logicalKey == LogicalKeyboardKey.f6) {
 
             if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
               final item = cartState.cart[cartState.cartCursorIndex.value];
