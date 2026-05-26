@@ -35,20 +35,25 @@ class MakeTransactionsActionsView extends StatelessWidget {
           /// Resume Transaction Button ----------------
           Stack(
             children: [
-              Badge.count(
-                count: heldTransactionRef.of(context).heldCarts.length,
-                child: FilledButton.icon(
-                  onPressed: heldTransactionRef.of(context).heldCarts.isEmpty
-                      ? null
-                      : () {
-                          showDialog(
-                            context: context,
-                            builder: (context) =>
-                                const ResumeTransactionDialog(),
-                          );
-                        },
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text("Resume Transaction"),
+              Badge(
+                label: const Text("F2", style: TextStyle(fontWeight: FontWeight.bold)),
+                alignment: Alignment.topLeft,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Badge.count(
+                  count: heldTransactionRef.of(context).heldCarts.length,
+                  child: FilledButton.icon(
+                    onPressed: heldTransactionRef.of(context).heldCarts.isEmpty
+                        ? null
+                        : () {
+                            showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  const ResumeTransactionDialog(),
+                            );
+                          },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text("Resume Transaction"),
+                  ),
                 ),
               ),
             ],
@@ -57,21 +62,26 @@ class MakeTransactionsActionsView extends StatelessWidget {
           /// Price Modifiers Button ----------------
           Stack(
             children: [
-              Badge.count(
-                count: makeTransactionRef.of(context).modifiers.length,
-                isLabelVisible: makeTransactionRef
-                    .of(context)
-                    .modifiers
-                    .isNotEmpty,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const PickPriceModifiersDialog(),
-                    );
-                  },
-                  icon: const Icon(Icons.price_change),
-                  label: const Text("Sale Modifier"),
+              Badge(
+                label: const Text("F3", style: TextStyle(fontWeight: FontWeight.bold)),
+                alignment: Alignment.topLeft,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Badge.count(
+                  count: makeTransactionRef.of(context).modifiers.length,
+                  isLabelVisible: makeTransactionRef
+                      .of(context)
+                      .modifiers
+                      .isNotEmpty,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const PickPriceModifiersDialog(),
+                      );
+                    },
+                    icon: const Icon(Icons.price_change),
+                    label: const Text("Sale Modifier"),
+                  ),
                 ),
               ),
             ],

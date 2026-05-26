@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
-import 'package:pos_terminal/states/restriction.state.dart';
 import 'package:pos_terminal/types/product.type.dart';
-import 'package:pos_terminal/views/dialogs/supervisor_validation.dialog.dart';
 
 class ChangeQuantityDialog extends StatefulWidget {
   final Product product;
@@ -73,36 +71,7 @@ class _ChangeQuantityDialogState extends State<ChangeQuantityDialog> {
     }
 
     final cartState = makeTransactionRef(context);
-    final restriction = restrictionStateRef(context);
-
-    void executeAction() {
-      cartState.setQuantity(product: widget.product, quantity: qty);
-    }
-
-    if (qty < widget.currentQuantity) {
-      if (restriction.isAuthorized) {
-        executeAction();
-        restriction.useAuthorization();
-        Navigator.pop(context);
-      } else {
-        // Pop the current ChangeQuantityDialog first to avoid overlapping dialogs
-        Navigator.pop(context);
-        
-        // Show Supervisor validation dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => SupervisorValidationDialog(
-            actionDescription: qty <= 0 
-                ? "remove '${widget.product.name}'" 
-                : "reduce quantity of '${widget.product.name}' to $qty",
-            onSuccess: executeAction,
-          ),
-        );
-      }
-    } else {
-      executeAction();
-      Navigator.pop(context);
-    }
+    cartState.setQuantity(product: widget.product, quantity: qty);
+    Navigator.pop(context);
   }
 }

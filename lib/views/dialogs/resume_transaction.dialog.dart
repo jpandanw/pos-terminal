@@ -1,16 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pos_terminal/states/held_transaction.state.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
 
-class ResumeTransactionDialog extends StatelessWidget {
+class ResumeTransactionDialog extends StatefulWidget {
   const ResumeTransactionDialog({super.key});
+
+  @override
+  State<ResumeTransactionDialog> createState() => _ResumeTransactionDialogState();
+}
+
+class _ResumeTransactionDialogState extends State<ResumeTransactionDialog> {
+  int _cursorIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final heldState = heldTransactionRef.of(context);
     final carts = heldState.heldCarts.toList();
 
-    return AlertDialog(
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          if (_cursorIndex > 0) {
+            setState(() => _cursorIndex--);
+          }
+          return KeyEventResult.handled;
+        }
+
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          if (_cursorIndex < carts.length - 1) {
+            setState(() => _cursorIndex++);
+          }
+          return KeyEventResult.handled;
+        }
+
+        if (event.logicalKey == LogicalKeyboardKey.enter) {
+          if (carts.isNotEmpty && _cursorIndex < carts.length) {
+            _handleResume(context, _cursorIndex);
+          }
+          return KeyEventResult.handled;
+        }
+
+        return KeyEventResult.ignored;
+      },
+      child: AlertDialog(
       title: const Text("Paused Transactions"),
       content: SizedBox(
         width: double.maxFinite,
@@ -30,6 +66,9 @@ class ResumeTransactionDialog extends StatelessWidget {
                   );
 
                   return ListTile(
+                    tileColor: index == _cursorIndex
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                        : null,
                     title: Text(
                       "Transaction #${index + 1}  -  ${heldCart.cart.length} items",
                     ),
@@ -49,6 +88,7 @@ class ResumeTransactionDialog extends StatelessWidget {
           child: const Text("Close"),
         ),
       ],
+    ),
     );
   }
 

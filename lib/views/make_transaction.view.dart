@@ -4,14 +4,15 @@ import 'package:pos_terminal/states/auth.state.dart';
 import 'package:pos_terminal/states/load_data.state.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
 import 'package:pos_terminal/states/products_loaded.state.dart';
-import 'package:pos_terminal/states/restriction.state.dart';
+import 'package:pos_terminal/states/theme.state.dart';
 import 'package:pos_terminal/views/cart.view.dart';
-import 'package:pos_terminal/views/dialogs/supervisor_validation.dialog.dart';
 import 'package:pos_terminal/views/product_list.view.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_terminal/states/held_transaction.state.dart';
 import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
 import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
+import 'package:pos_terminal/views/dialogs/pick_price_modifiers.dialog.dart';
+import 'package:pos_terminal/views/dialogs/resume_transaction.dialog.dart';
 import 'package:signals/signals_flutter.dart';
 
 class MakeTransactionView extends StatelessWidget {
@@ -31,8 +32,6 @@ class MakeTransactionView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: [
-                  const _RestrictionStatusIndicator(),
-                  const SizedBox(width: 16),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -45,6 +44,88 @@ class MakeTransactionView extends StatelessWidget {
                         ),
                       ),
                       Text(cashier.email, style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  Watch((_) {
+                    final themeState = themeStateRef(context);
+                    final isDark = themeState.isDarkMode.value;
+                    return IconButton(
+                      icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                      tooltip: 'Toggle Theme',
+                      onPressed: () {
+                        themeState.toggleDarkMode();
+                      },
+                    );
+                  }),
+                  const SizedBox(width: 16),
+                  PopupMenuButton<Color>(
+                    icon: const Icon(Icons.color_lens),
+                    tooltip: 'Change Color Scheme',
+                    onSelected: (color) {
+                      themeStateRef(context).setSeedColor(color);
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: Colors.deepPurple,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.deepPurple),
+                            const SizedBox(width: 8),
+                            const Text("Deep Purple"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: Colors.blue,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.blue),
+                            const SizedBox(width: 8),
+                            const Text("Blue"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: Colors.teal,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.teal),
+                            const SizedBox(width: 8),
+                            const Text("Teal"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: Colors.green,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.green),
+                            const SizedBox(width: 8),
+                            const Text("Green"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: Colors.orange,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.orange),
+                            const SizedBox(width: 8),
+                            const Text("Orange"),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: Colors.red,
+                        child: Row(
+                          children: [
+                            Container(width: 16, height: 16, color: Colors.red),
+                            const SizedBox(width: 8),
+                            const Text("Red"),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(width: 16),
@@ -106,6 +187,26 @@ class MakeTransactionView extends StatelessWidget {
             return KeyEventResult.handled;
           }
 
+          // F2 to resume transaction
+          if (event.logicalKey == LogicalKeyboardKey.f2) {
+            if (heldTransactionRef.of(context).heldCarts.isNotEmpty) {
+              showDialog(
+                context: context,
+                builder: (context) => const ResumeTransactionDialog(),
+              );
+            }
+            return KeyEventResult.handled;
+          }
+
+          // F3 to pick price modifiers
+          if (event.logicalKey == LogicalKeyboardKey.f3) {
+            showDialog(
+              context: context,
+              builder: (context) => const PickPriceModifiersDialog(),
+            );
+            return KeyEventResult.handled;
+          }
+
           // Up/Down arrows for cart cursor
           if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
             cartState.moveCursorUp();
@@ -120,25 +221,7 @@ class MakeTransactionView extends StatelessWidget {
           if (event.logicalKey == LogicalKeyboardKey.delete) {
             if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
               final item = cartState.cart[cartState.cartCursorIndex.value];
-              final restriction = restrictionStateRef(context);
-
-              void executeAction() {
-                cartState.removeFromCart(product: item.product);
-              }
-
-              if (restriction.isAuthorized) {
-                executeAction();
-                restriction.useAuthorization();
-              } else {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => SupervisorValidationDialog(
-                    actionDescription: "remove '${item.product.name}'",
-                    onSuccess: executeAction,
-                  ),
-                );
-              }
+              cartState.removeFromCart(product: item.product);
             }
             return KeyEventResult.handled;
           }
@@ -222,94 +305,3 @@ class MakeTransactionView extends StatelessWidget {
   }
 }
 
-class _RestrictionStatusIndicator extends StatelessWidget {
-  const _RestrictionStatusIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    final restriction = restrictionStateRef(context);
-    final theme = Theme.of(context);
-
-    return Watch((_) {
-      final isBypassed = restriction.bypassType.value != BypassType.none;
-      final text = restriction.statusText;
-      final colorScheme = theme.colorScheme;
-
-      return Tooltip(
-        message: isBypassed 
-            ? "Supervisor authorization is active. Tap 'X' to lock." 
-            : "Click to pre-authorize with supervisor credentials.",
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isBypassed 
-                ? Colors.green.withOpacity(0.15) 
-                : colorScheme.outlineVariant.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isBypassed 
-                  ? Colors.green.withOpacity(0.4) 
-                  : colorScheme.outlineVariant,
-              width: 1,
-            ),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () {
-              if (!isBypassed) {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => SupervisorValidationDialog(
-                    actionDescription: "pre-authorize remove/reduce operations",
-                    onSuccess: () {},
-                  ),
-                );
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isBypassed ? Icons.lock_open_outlined : Icons.lock_outline,
-                    color: isBypassed ? Colors.green[700] : colorScheme.onSurfaceVariant,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isBypassed ? Colors.green[800] : colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (isBypassed) ...[
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => restriction.clearBypass(),
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.green[700]?.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.close,
-                          size: 12,
-                          color: Colors.green[800],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    });
-  }
-}

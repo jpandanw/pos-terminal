@@ -89,7 +89,16 @@ class _CustomerMoneyDialogState extends State<CustomerMoneyDialog> {
 
   void _submit(BuildContext context, MakeTransactionState cartState) async {
     final change = cartState.change.value;
-    if (change == null || change < 0) return;
+    if (change == null) return;
+    
+    if (change < 0) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Insufficient customer money.")),
+        );
+      }
+      return;
+    }
 
     final hardwareState = startupStateRef(context);
     final authState = authStateRef(context);

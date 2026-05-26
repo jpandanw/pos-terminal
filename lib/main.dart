@@ -2,13 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:lite_ref/lite_ref.dart';
 import 'package:pos_terminal/states/auth.state.dart';
 import 'package:pos_terminal/states/hardware.state.dart';
+import 'package:pos_terminal/states/theme.state.dart';
 import 'package:pos_terminal/views/login.view.dart';
 import 'package:pos_terminal/views/make_transaction.view.dart';
 import 'package:pos_terminal/views/register.view.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    titleBarStyle: TitleBarStyle.hidden,
+    fullScreen: true,
+  );
+  
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setFullScreen(true);
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
   runApp(const LiteRefScope(child: MyApp()));
 }
 
@@ -24,12 +39,25 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'POS Terminal',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: SafeArea(
+    return Watch((_) {
+      final themeState = themeStateRef(context);
+      
+      return MaterialApp(
+        title: 'POS Terminal',
+        themeMode: themeState.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: themeState.seedColor.value,
+            brightness: Brightness.light,
+          ),
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: themeState.seedColor.value,
+            brightness: Brightness.dark,
+          ),
+        ),
+        home: SafeArea(
         child: Builder(
           builder: (context) {
             // Kick off init once
@@ -110,5 +138,6 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+    });
   }
 }

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/make_transaction.state.dart';
-import 'package:pos_terminal/states/restriction.state.dart';
 import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
 import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
 import 'package:pos_terminal/views/dialogs/customer_card.dialog.dart';
-import 'package:pos_terminal/views/dialogs/supervisor_validation.dialog.dart';
 import 'package:pos_terminal/views/total.view.dart';
 import 'package:signals/signals_flutter.dart';
 
@@ -173,56 +171,18 @@ class _CartTable extends StatelessWidget {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          final restriction = restrictionStateRef(context);
-
-                          void executeAction() {
-                            if (c.$2.quantity <= 1) {
-                              cartState.removeFromCart(product: c.$2.product);
-                            } else {
-                              cartState.addToCart(
-                                product: c.$2.product,
-                                quantity: -1,
-                              );
-                            }
-                          }
-
-                          if (restriction.isAuthorized) {
-                            executeAction();
-                            restriction.useAuthorization();
+                          if (c.$2.quantity <= 1) {
+                            cartState.removeFromCart(product: c.$2.product);
                           } else {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) => SupervisorValidationDialog(
-                                actionDescription: c.$2.quantity <= 1 
-                                    ? "remove '${c.$2.product.name}'" 
-                                    : "reduce quantity of '${c.$2.product.name}'",
-                                onSuccess: executeAction,
-                              ),
+                            cartState.addToCart(
+                              product: c.$2.product,
+                              quantity: -1,
                             );
                           }
                         },
                         child: const Icon(Icons.remove),
                         onLongPress: () {
-                          final restriction = restrictionStateRef(context);
-
-                          void executeAction() {
-                            cartState.removeFromCart(product: c.$2.product);
-                          }
-
-                          if (restriction.isAuthorized) {
-                            executeAction();
-                            restriction.useAuthorization();
-                          } else {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) => SupervisorValidationDialog(
-                                actionDescription: "remove '${c.$2.product.name}'",
-                                onSuccess: executeAction,
-                              ),
-                            );
-                          }
+                          cartState.removeFromCart(product: c.$2.product);
                         },
                       ),
                       InkWell(
