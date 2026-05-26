@@ -22,7 +22,7 @@ class MakeTransactionView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("SUKI - POINT OF SALE"),
+        title: const Text("XM GROCERY - POINT OF SALE"),
         actions: [
           Watch((_) {
             final cashier = authStateRef(context).cashier.value;
