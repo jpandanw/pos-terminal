@@ -169,14 +169,13 @@ class _CartTableState extends State<_CartTable> {
           ...widget.cartState.cart.indexed.map((c) {
             final key = _rowKeys.putIfAbsent(c.$1, () => GlobalKey());
             return TableRow(
-              key: key,
               decoration: BoxDecoration(
                 color: c.$1 == widget.cartState.cartCursorIndex.value
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                     : null,
               ),
               children: [
-                TableCell(child: Text("${c.$1 + 1}.")),
+                TableCell(child: Container(key: key, child: Text("${c.$1 + 1}."))),
                 TableCell(
                   child: Text(
                     c.$2.product.name,
@@ -202,9 +201,9 @@ class _CartTableState extends State<_CartTable> {
                       ElevatedButton(
                         onPressed: () {
                           if (c.$2.quantity <= 1) {
-                            cartState.removeFromCart(product: c.$2.product);
+                            widget.cartState.removeFromCart(product: c.$2.product);
                           } else {
-                            cartState.addToCart(
+                            widget.cartState.addToCart(
                               product: c.$2.product,
                               quantity: -1,
                             );
@@ -212,7 +211,7 @@ class _CartTableState extends State<_CartTable> {
                         },
                         child: const Icon(Icons.remove),
                         onLongPress: () {
-                          cartState.removeFromCart(product: c.$2.product);
+                          widget.cartState.removeFromCart(product: c.$2.product);
                         },
                       ),
                       InkWell(
@@ -238,7 +237,7 @@ class _CartTableState extends State<_CartTable> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          cartState.addToCart(product: c.$2.product, quantity: 1);
+                          widget.cartState.addToCart(product: c.$2.product, quantity: 1);
                         },
                         child: const Icon(Icons.add),
                       ),
