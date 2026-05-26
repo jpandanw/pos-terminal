@@ -8,6 +8,7 @@ import 'package:signals/signals_flutter.dart';
 
 final _selectedCategory = signal<String?>(null);
 final _searchQuery = signal<String>('');
+final searchFocusNode = FocusNode();
 
 class ProductListView extends StatefulWidget {
   const ProductListView({super.key});
@@ -50,8 +51,27 @@ class _ProductListViewState extends State<ProductListView> {
       children: [
         SearchBar(
           controller: _searchController,
+          focusNode: searchFocusNode,
           hintText: 'Search Product Name, SKU, or Barcode...',
-          leading: const Icon(Icons.search),
+          leading: Badge(
+            label: const Text("/", style: TextStyle(fontWeight: FontWeight.bold)),
+            alignment: Alignment.topLeft,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: const Icon(Icons.search),
+          ),
+          onSubmitted: (value) {
+            if (value.isNotEmpty) {
+              final results = productsLoadedRef(context).searchProducts(value);
+              if (results.isNotEmpty) {
+                makeTransactionRef(context).addToCart(
+                  product: results.first,
+                  quantity: 1,
+                );
+                _clearSearch();
+                searchFocusNode.unfocus();
+              }
+            }
+          },
           trailing: [
             Watch((context) {
               final query = _searchQuery.value;

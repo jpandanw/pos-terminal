@@ -8,6 +8,10 @@ import 'package:pos_terminal/states/restriction.state.dart';
 import 'package:pos_terminal/views/cart.view.dart';
 import 'package:pos_terminal/views/dialogs/supervisor_validation.dialog.dart';
 import 'package:pos_terminal/views/product_list.view.dart';
+import 'package:flutter/services.dart';
+import 'package:pos_terminal/states/held_transaction.state.dart';
+import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
+import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
 import 'package:signals/signals_flutter.dart';
 
 class MakeTransactionView extends StatelessWidget {
@@ -66,31 +70,129 @@ class MakeTransactionView extends StatelessWidget {
           }),
         ],
       ),
-      body: BarcodeKeyboardListener(
-        bufferDuration: Duration(milliseconds: 299),
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-        onBarcodeScanned: (String p1) {
-          final product = productsLoadedRef(context).getProductByBarcode(p1);
-          if (product == null) {
-            debugPrint("Product not found");
-            return;
+          final cartState = makeTransactionRef(context);
+
+          // "/" to focus search
+          if (event.logicalKey == LogicalKeyboardKey.slash) {
+            if (!searchFocusNode.hasFocus) {
+              searchFocusNode.requestFocus();
+              return KeyEventResult.handled;
+            }
           }
-          makeTransactionRef(context).addToCart(product: product, quantity: 1);
+
+          // Ctrl+Enter or End to complete transaction
+          if (event.logicalKey == LogicalKeyboardKey.end ||
+              (event.logicalKey == LogicalKeyboardKey.enter && HardwareKeyboard.instance.isControlPressed)) {
+            if (cartState.cart.isNotEmpty) {
+              cartState.customerMoney.value = null;
+              showDialog(
+                context: context,
+                builder: (context) => const CustomerMoneyDialog(),
+              );
+            }
+            return KeyEventResult.handled;
+          }
+
+          // F1 to hold transaction
+          if (event.logicalKey == LogicalKeyboardKey.f1) {
+            if (cartState.cart.isNotEmpty) {
+              heldTransactionRef.of(context).holdCurrentCart(context);
+            }
+            return KeyEventResult.handled;
+          }
+
+          // Up/Down arrows for cart cursor
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            cartState.moveCursorUp();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            cartState.moveCursorDown();
+            return KeyEventResult.handled;
+          }
+
+          // DEL to remove item
+          if (event.logicalKey == LogicalKeyboardKey.delete) {
+            if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
+              final item = cartState.cart[cartState.cartCursorIndex.value];
+              final restriction = restrictionStateRef(context);
+
+              void executeAction() {
+                cartState.removeFromCart(product: item.product);
+              }
+
+              if (restriction.isAuthorized) {
+                executeAction();
+                restriction.useAuthorization();
+              } else {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => SupervisorValidationDialog(
+                    actionDescription: "remove '${item.product.name}'",
+                    onSuccess: executeAction,
+                  ),
+                );
+              }
+            }
+            return KeyEventResult.handled;
+          }
+
+          // F6 or ENTER to set quantity
+          if (event.logicalKey == LogicalKeyboardKey.f6 ||
+              (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isControlPressed)) {
+            // Wait, if searchFocusNode is focused, enter is handled by SearchBar onSubmitted.
+            // We shouldn't capture ENTER if search is focused.
+            if (searchFocusNode.hasFocus && event.logicalKey == LogicalKeyboardKey.enter) {
+              return KeyEventResult.ignored; // Let SearchBar handle it
+            }
+
+            if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
+              final item = cartState.cart[cartState.cartCursorIndex.value];
+              showDialog(
+                context: context,
+                builder: (context) => ChangeQuantityDialog(
+                  product: item.product,
+                  currentQuantity: item.quantity,
+                ),
+              );
+            }
+            return KeyEventResult.handled;
+          }
+
+          return KeyEventResult.ignored;
         },
-        child: const Row(
-          children: [
-            Flexible(flex: 4, child: ProductListView()),
-            VerticalDivider(),
-            Flexible(
-              flex: 4,
-              child: Column(
-                children: [
-                  Text("Cart:"),
-                  Flexible(flex: 10, child: CartView()),
-                ],
+        child: BarcodeKeyboardListener(
+          bufferDuration: Duration(milliseconds: 299),
+
+          onBarcodeScanned: (String p1) {
+            final product = productsLoadedRef(context).getProductByBarcode(p1);
+            if (product == null) {
+              debugPrint("Product not found");
+              return;
+            }
+            makeTransactionRef(context).addToCart(product: product, quantity: 1);
+          },
+          child: const Row(
+            children: [
+              Flexible(flex: 4, child: ProductListView()),
+              VerticalDivider(),
+              Flexible(
+                flex: 4,
+                child: Column(
+                  children: [
+                    Text("Cart:"),
+                    Flexible(flex: 10, child: CartView()),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

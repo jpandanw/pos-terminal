@@ -17,14 +17,19 @@ class MakeTransactionsActionsView extends StatelessWidget {
         spacing: 8,
         children: [
           /// Hold Transaction Button ---------------
-          FilledButton.icon(
-            onPressed: makeTransactionRef.of(context).cart.isEmpty
-                ? null
-                : () {
-                    heldTransactionRef.of(context).holdCurrentCart(context);
-                  },
-            icon: const Icon(Icons.pause),
-            label: const Text("Hold Transaction"),
+          Badge(
+            label: const Text("F1", style: TextStyle(fontWeight: FontWeight.bold)),
+            alignment: Alignment.topLeft,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: FilledButton.icon(
+              onPressed: makeTransactionRef.of(context).cart.isEmpty
+                  ? null
+                  : () {
+                      heldTransactionRef.of(context).holdCurrentCart(context);
+                    },
+              icon: const Icon(Icons.pause),
+              label: const Text("Hold Transaction"),
+            ),
           ),
 
           /// Resume Transaction Button ----------------
@@ -66,7 +71,7 @@ class MakeTransactionsActionsView extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.price_change),
-                  label: const Text("Price Modifiers"),
+                  label: const Text("Sale Modifier"),
                 ),
               ),
             ],

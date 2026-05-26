@@ -14,13 +14,13 @@ class PickPriceModifiersDialog extends StatelessWidget {
       final activeModifiers = makeTransactionRef.of(context).modifiers.value;
 
       return AlertDialog(
-        title: const Text("Select Price Modifiers"),
+        title: const Text("Select Sale Modifier"),
         content: SizedBox(
           width: 400,
           child: availableModifiers.isEmpty
               ? const Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Text("No price modifiers available."),
+                  child: Text("No sale modifiers available."),
                 )
               : ListView.builder(
                   shrinkWrap: true,

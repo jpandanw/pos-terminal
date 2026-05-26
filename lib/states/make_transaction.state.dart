@@ -11,6 +11,7 @@ class MakeTransactionState implements Disposable {
   final customerMoney = signal<double?>(null);
   final customerId = signal<String?>(null);
   final customerName = signal<String?>(null);
+  final cartCursorIndex = signal<int>(0);
 
   late final change = computed<double?>(() {
     if (customerMoney.value == null) return null;
@@ -54,6 +55,21 @@ class MakeTransactionState implements Disposable {
 
   void removeFromCartByIndex(int index) {
     cart.removeAt(index);
+    if (cartCursorIndex.value >= cart.length) {
+      cartCursorIndex.value = cart.length - 1;
+    }
+  }
+
+  void moveCursorUp() {
+    if (cartCursorIndex.value > 0) {
+      cartCursorIndex.value--;
+    }
+  }
+
+  void moveCursorDown() {
+    if (cartCursorIndex.value < cart.length - 1) {
+      cartCursorIndex.value++;
+    }
   }
 
   void setQuantity({required Product product, required int quantity}) {
@@ -75,6 +91,7 @@ class MakeTransactionState implements Disposable {
     customerMoney.value = null;
     customerId.value = null;
     customerName.value = null;
+    cartCursorIndex.value = 0;
   }
 
   bool inCart({required Product product}) =>
@@ -92,5 +109,6 @@ class MakeTransactionState implements Disposable {
     customerMoney.dispose();
     customerId.dispose();
     customerName.dispose();
+    cartCursorIndex.dispose();
   }
 }
