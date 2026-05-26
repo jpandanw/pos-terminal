@@ -38,7 +38,11 @@ class RecieptView extends StatelessWidget {
 
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
+        pageFormat: PdfPageFormat(
+          3 * PdfPageFormat.inch,
+          double.infinity,
+          marginAll: 5 * PdfPageFormat.mm,
+        ),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -342,7 +346,11 @@ class RecieptView extends StatelessWidget {
           ],
         ),
         body: PdfPreview(
-          initialPageFormat: PdfPageFormat.roll80,
+          initialPageFormat: PdfPageFormat(
+            3 * PdfPageFormat.inch,
+            double.infinity,
+            marginAll: 5 * PdfPageFormat.mm,
+          ),
           maxPageWidth: 400,
           useActions: false,
           build: (format) async {
