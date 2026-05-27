@@ -50,6 +50,9 @@ dependencies:
   shared_preferences: ^2.5.3
   uuid: ^4.5.3
   window_manager: ^0.5.1
+  unique_device_identifier: 2.0.4
+  sembast: ^3.8.7
+  sembast_web: ^2.4.4+1
 
 dev_dependencies:
   flutter_test:

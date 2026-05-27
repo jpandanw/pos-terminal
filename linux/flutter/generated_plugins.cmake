@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   printing
   screen_retriever_linux
+  unique_device_identifier
   window_manager
 )
 

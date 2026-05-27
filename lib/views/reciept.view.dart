@@ -43,7 +43,9 @@ class RecieptView extends StatelessWidget {
       marginTop: 5 * PdfPageFormat.mm,
       marginBottom: 5 * PdfPageFormat.mm,
       marginLeft: 5 * PdfPageFormat.mm,
-      marginRight: paperType == PaperType.xmPaper ? 24 * PdfPageFormat.mm : 5 * PdfPageFormat.mm,
+      marginRight: paperType == PaperType.xmPaper
+          ? 30 * PdfPageFormat.mm
+          : 5 * PdfPageFormat.mm,
     );
 
     doc.addPage(
@@ -63,28 +65,95 @@ class RecieptView extends StatelessWidget {
                 ),
               ),
 
-              pw.Text("Purok 1, Sayre Highway, Kisolon, Sumilao, Bukidnon"),
+              pw.Text(
+                "Purok 1, Sayre Highway, Kisolon, Sumilao, Bukidnon",
+                style: pw.TextStyle(fontSize: 4),
+                textAlign: pw.TextAlign.center,
+              ),
               pw.SizedBox(height: 10),
-              pw.Text("Date: $formattedDate"),
-              pw.Text("Receipt No: $transactionId"),
-              pw.Text("Cashier: $cashierName"),
+              pw.Text("Date: $formattedDate", style: pw.TextStyle(fontSize: 6)),
+              pw.Text(
+                "Receipt No: $transactionId",
+                style: pw.TextStyle(fontSize: 6),
+              ),
+              pw.Text(
+                "Cashier: $cashierName",
+                style: pw.TextStyle(fontSize: 6),
+              ),
               if (cartState.customerName.value != null)
                 pw.Text("Customer: ${cartState.customerName.value}"),
               pw.Divider(borderStyle: pw.BorderStyle.dashed),
               pw.SizedBox(height: 5),
-              ...sortedCart.map((item) {
-                return pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Text("${item.product.name} x${item.quantity}"),
-                    ),
-                    pw.Text(
-                      "P${(item.product.price * item.quantity).toStringAsFixed(2)}",
-                    ),
-                  ],
-                );
-              }),
+              pw.Table(
+                columnWidths: {
+                  0: pw.FixedColumnWidth(25 * PdfPageFormat.mm),
+                  1: pw.FixedColumnWidth(5 * PdfPageFormat.mm),
+                  2: pw.FixedColumnWidth(13 * PdfPageFormat.mm),
+                  3: pw.FixedColumnWidth(12 * PdfPageFormat.mm),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text("Name", style: pw.TextStyle(fontSize: 6)),
+                      pw.Text("Qty", style: pw.TextStyle(fontSize: 6)),
+                      pw.Text("Price", style: pw.TextStyle(fontSize: 6)),
+                      pw.Text("Subtotal", style: pw.TextStyle(fontSize: 6)),
+                    ],
+                  ),
+                  ...sortedCart.map((item) {
+                    return pw.TableRow(
+                      children: [
+                        pw.Text(
+                          item.product.name,
+                          style: const pw.TextStyle(fontSize: 6),
+                        ),
+                        pw.Text(
+                          item.quantity.toString(),
+                          style: const pw.TextStyle(fontSize: 6),
+                        ),
+                        pw.Text(
+                          item.product.price.toStringAsFixed(2),
+                          style: const pw.TextStyle(fontSize: 6),
+                        ),
+                        pw.Text(
+                          (item.product.price * item.quantity).toStringAsFixed(
+                            2,
+                          ),
+                          style: const pw.TextStyle(fontSize: 6),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+              // ...sortedCart.map((item) {
+              //   return pw.Table(
+              //     children: [
+              //       TableRow(children: [])
+
+              //     ]
+              //   );
+              //   return pw.Row(
+              //     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              //     children: [
+              //       pw.Table(
+              //         children: [
+              //         ]
+
+              //       ),
+
+              //       pw.Expanded(
+              //         child: pw.Text(
+              //           "${item.product.name} x${item.quantity}",
+              //           style: pw.TextStyle(fontSize: 6),
+              //         ),
+              //       ),
+              //       pw.Text(
+              //         "P${(item.product.price * item.quantity).toStringAsFixed(2)}",
+              //       ),
+              //     ],
+              //   );
+              // }),
               pw.SizedBox(height: 5),
               pw.Divider(borderStyle: pw.BorderStyle.dashed),
               if (cartState.modifiers.value.isNotEmpty) ...[
@@ -385,7 +454,9 @@ class RecieptView extends StatelessWidget {
             marginTop: 5 * PdfPageFormat.mm,
             marginBottom: 5 * PdfPageFormat.mm,
             marginLeft: 5 * PdfPageFormat.mm,
-            marginRight: paperType == PaperType.xmPaper ? 24 * PdfPageFormat.mm : 5 * PdfPageFormat.mm,
+            marginRight: paperType == PaperType.xmPaper
+                ? 30 * PdfPageFormat.mm
+                : 5 * PdfPageFormat.mm,
           );
 
           return PdfPreview(

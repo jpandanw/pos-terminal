@@ -40,7 +40,7 @@ class PrinterState extends Disposable {
   final selectedPrinter = signal<Printer?>(null);
   final useDirectPrint = signal<bool>(true);
   final isInitialized = signal<bool>(false);
-  final paperType = signal<PaperType>(PaperType.mm80);
+  final paperType = signal<PaperType>(PaperType.xmPaper);
 
   static const String _printerKey = 'saved_printer';
   static const String _directPrintKey = 'use_direct_print';
@@ -61,7 +61,7 @@ class PrinterState extends Disposable {
       if (savedPaperType != null) {
         paperType.value = PaperType.values.firstWhere(
           (e) => e.name == savedPaperType,
-          orElse: () => PaperType.mm80,
+          orElse: () => PaperType.xmPaper,
         );
       } else {
         // Fallback for older version which used double paper_size
@@ -69,7 +69,7 @@ class PrinterState extends Disposable {
         if (oldDouble == 58.0) {
           paperType.value = PaperType.mm58;
         } else {
-          paperType.value = PaperType.mm80;
+          paperType.value = PaperType.xmPaper;
         }
       }
 

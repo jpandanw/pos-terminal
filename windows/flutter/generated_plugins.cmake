@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_thermal_printer
   printing
   screen_retriever_windows
+  unique_device_identifier
   universal_ble
   window_manager
 )

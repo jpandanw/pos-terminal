@@ -20,29 +20,35 @@ class FetchDataState extends Disposable {
   final saleModifiers = listSignal<TransactionModifier>([]);
 
   AsyncResult<void> load() async {
+    debugPrint("Loading data...");
     isFetcing.value = true;
+    debugPrint("Fetching products...");
     final products = await fetchProducts();
     if (products.isError()) {
       isFetcing.value = false;
       return Exception("Unable to fetch Products").toFailure();
     }
 
+    debugPrint("Fetching categories...");
     final categories = await fetchCategories();
     if (categories.isError()) {
       isFetcing.value = false;
       return Exception("Unable to fetch Categories").toFailure();
     }
 
+    debugPrint("Fetching sale modifiers...");
     final saleModifiers = await fetchSaleModifiers();
     if (saleModifiers.isError()) {
       isFetcing.value = false;
       return Exception("Unable to fetch Sale Modifiers").toFailure();
     }
 
+    debugPrint("Assigning values...");
     this.categories.value = categories.getOrDefault([]);
     this.products.value = products.getOrDefault([]);
     this.saleModifiers.value = saleModifiers.getOrDefault([]);
 
+    debugPrint("Setting hasInitialSync to true...");
     hasInitialSync.value = true;
     isFetcing.value = false;
     return Success(0);

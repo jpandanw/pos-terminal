@@ -18,7 +18,10 @@ class MakeTransactionsActionsView extends StatelessWidget {
         children: [
           /// Hold Transaction Button ---------------
           Badge(
-            label: const Text("F1", style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text(
+              "F1",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             alignment: Alignment.topLeft,
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: FilledButton.icon(
@@ -36,7 +39,10 @@ class MakeTransactionsActionsView extends StatelessWidget {
           Stack(
             children: [
               Badge(
-                label: const Text("F2", style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  "F2",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 alignment: Alignment.topLeft,
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child: Badge.count(
@@ -63,7 +69,10 @@ class MakeTransactionsActionsView extends StatelessWidget {
           Stack(
             children: [
               Badge(
-                label: const Text("F3", style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  "F3",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 alignment: Alignment.topLeft,
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child: Badge.count(
@@ -88,25 +97,25 @@ class MakeTransactionsActionsView extends StatelessWidget {
           ),
 
           /// Customer Button ----------------
-          Stack(
-            children: [
-              Badge(
-                isLabelVisible:
-                    makeTransactionRef.of(context).customerId.value != null,
-                label: const Icon(Icons.check, size: 10),
-                child: FilledButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const CustomerSearchDialog(),
-                    );
-                  },
-                  icon: const Icon(Icons.person_search),
-                  label: const Text("Customer"),
-                ),
-              ),
-            ],
-          ),
+          // Stack(
+          //   children: [
+          //     Badge(
+          //       isLabelVisible:
+          //           makeTransactionRef.of(context).customerId.value != null,
+          //       label: const Icon(Icons.check, size: 10),
+          //       child: FilledButton.icon(
+          //         onPressed: () {
+          //           showDialog(
+          //             context: context,
+          //             builder: (context) => const CustomerSearchDialog(),
+          //           );
+          //         },
+          //         icon: const Icon(Icons.person_search),
+          //         label: const Text("Customer"),
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );

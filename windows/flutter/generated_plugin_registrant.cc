@@ -9,6 +9,7 @@
 #include <flutter_thermal_printer/flutter_thermal_printer_plugin_c_api.h>
 #include <printing/printing_plugin.h>
 #include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
+#include <unique_device_identifier/unique_device_identifier_plugin_c_api.h>
 #include <universal_ble/universal_ble_plugin_c_api.h>
 #include <window_manager/window_manager_plugin.h>
 
@@ -19,6 +20,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("PrintingPlugin"));
   ScreenRetrieverWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverWindowsPluginCApi"));
+  UniqueDeviceIdentifierPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("UniqueDeviceIdentifierPluginCApi"));
   UniversalBlePluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UniversalBlePluginCApi"));
   WindowManagerPluginRegisterWithRegistrar(
