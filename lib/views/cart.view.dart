@@ -46,7 +46,10 @@ class CartView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Customer:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          "Customer:",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         Text(cartState.customerName.value!),
                         IconButton(
                           icon: const Icon(Icons.close, size: 16),
@@ -54,7 +57,7 @@ class CartView extends StatelessWidget {
                             cartState.customerId.value = null;
                             cartState.customerName.value = null;
                           },
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -68,12 +71,19 @@ class CartView extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.credit_card),
-                    label: Text(cartState.customerName.value == null ? "ADD CUSTOMER CARD" : "CHANGE CUSTOMER CARD"),
+                    label: Text(
+                      cartState.customerName.value == null
+                          ? "ADD CUSTOMER CARD"
+                          : "CHANGE CUSTOMER CARD",
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Badge(
-                  label: const Text("END", style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    "END",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   alignment: Alignment.topLeft,
                   backgroundColor: Theme.of(context).colorScheme.secondary,
                   child: SizedBox(
@@ -85,7 +95,8 @@ class CartView extends StatelessWidget {
                               cartState.customerMoney.value = null; // reset
                               showDialog(
                                 context: context,
-                                builder: (context) => const CustomerMoneyDialog(),
+                                builder: (context) =>
+                                    const CustomerMoneyDialog(),
                               );
                             },
                       child: const Text("COMPLETE TRANSACTION"),
@@ -100,7 +111,6 @@ class CartView extends StatelessWidget {
     );
   }
 }
-
 
 class _CartTable extends StatefulWidget {
   const _CartTable({required this.cartState});
@@ -140,116 +150,129 @@ class _CartTableState extends State<_CartTable> {
       (_) => SingleChildScrollView(
         child: Table(
           columnWidths: const {
-            0: FixedColumnWidth(24),
+            0: FixedColumnWidth(32),
             1: FlexColumnWidth(),
             2: FlexColumnWidth(),
             3: FlexColumnWidth(),
             4: FlexColumnWidth(),
           },
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        children: [
-          const TableRow(
-            children: [
-              TableCell(child: SizedBox.shrink()),
-              TableCell(child: Text("Name")),
-              TableCell(child: Text("Price")),
-              TableCell(child: Text("Subtotal")),
-              TableCell(child: Text("Qty")),
-            ],
-          ),
-          const TableRow(
-            children: [
-              TableCell(child: Divider()),
-              TableCell(child: Divider()),
-              TableCell(child: Divider()),
-              TableCell(child: Divider()),
-              TableCell(child: Divider()),
-            ],
-          ),
-          ...widget.cartState.cart.indexed.map((c) {
-            final key = _rowKeys.putIfAbsent(c.$1, () => GlobalKey());
-            return TableRow(
-              decoration: BoxDecoration(
-                color: c.$1 == widget.cartState.cartCursorIndex.value
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-                    : null,
-              ),
+          children: [
+            const TableRow(
               children: [
-                TableCell(child: Container(key: key, child: Text("${c.$1 + 1}."))),
-                TableCell(
-                  child: Text(
-                    c.$2.product.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                TableCell(child: SizedBox.shrink()),
+                TableCell(child: Text("Name")),
+                TableCell(child: Text("Price")),
+                TableCell(child: Text("Subtotal")),
+                TableCell(child: Text("Qty")),
+              ],
+            ),
+            const TableRow(
+              children: [
+                TableCell(child: Divider()),
+                TableCell(child: Divider()),
+                TableCell(child: Divider()),
+                TableCell(child: Divider()),
+                TableCell(child: Divider()),
+              ],
+            ),
+            ...widget.cartState.cart.indexed.map((c) {
+              final key = _rowKeys.putIfAbsent(c.$1, () => GlobalKey());
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: c.$1 == widget.cartState.cartCursorIndex.value
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.1)
+                      : null,
+                ),
+                children: [
+                  TableCell(
+                    child: Container(key: key, child: Text("${c.$1 + 1}.")),
+                  ),
+                  TableCell(
+                    child: Text(
+                      c.$2.product.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-                TableCell(
-                  child: Text("PHP ${c.$2.product.price.toStringAsFixed(2)}"),
-                ),
-                TableCell(
-                  child: Text(
-                    "PHP ${(c.$2.quantity * c.$2.product.price).toStringAsFixed(2)}",
+                  TableCell(
+                    child: Text("PHP ${c.$2.product.price.toStringAsFixed(2)}"),
                   ),
-                ),
-                TableCell(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    spacing: 8,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          if (c.$2.quantity <= 1) {
-                            widget.cartState.removeFromCart(product: c.$2.product);
-                          } else {
-                            widget.cartState.addToCart(
+                  TableCell(
+                    child: Text(
+                      "PHP ${(c.$2.quantity * c.$2.product.price).toStringAsFixed(2)}",
+                    ),
+                  ),
+                  TableCell(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      spacing: 8,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            if (c.$2.quantity <= 1) {
+                              widget.cartState.removeFromCart(
+                                product: c.$2.product,
+                              );
+                            } else {
+                              widget.cartState.addToCart(
+                                product: c.$2.product,
+                                quantity: -1,
+                              );
+                            }
+                          },
+                          child: const Icon(Icons.remove),
+                          onLongPress: () {
+                            widget.cartState.removeFromCart(
                               product: c.$2.product,
-                              quantity: -1,
                             );
-                          }
-                        },
-                        child: const Icon(Icons.remove),
-                        onLongPress: () {
-                          widget.cartState.removeFromCart(product: c.$2.product);
-                        },
-                      ),
-                      InkWell(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => ChangeQuantityDialog(
-                              product: c.$2.product,
-                              currentQuantity: c.$2.quantity,
+                          },
+                        ),
+                        InkWell(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => ChangeQuantityDialog(
+                                product: c.$2.product,
+                                currentQuantity: c.$2.quantity,
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                          child: Text(
-                            c.$2.quantity.toString(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            child: Text(
+                              c.$2.quantity.toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          widget.cartState.addToCart(product: c.$2.product, quantity: 1);
-                        },
-                        child: const Icon(Icons.add),
-                      ),
-                    ],
+                        ElevatedButton(
+                          onPressed: () {
+                            widget.cartState.addToCart(
+                              product: c.$2.product,
+                              quantity: 1,
+                            );
+                          },
+                          child: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          }),
-        ],
+                ],
+              );
+            }),
+          ],
+        ),
       ),
-    ),
     );
   }
 }

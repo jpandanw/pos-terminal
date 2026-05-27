@@ -1,4 +1,5 @@
 import 'package:lite_ref/lite_ref.dart';
+import 'package:pos_terminal/services/local_sales_storage.dart';
 import 'package:pos_terminal/services/startup.service.dart';
 import 'package:signals/signals_core.dart';
 
@@ -17,6 +18,10 @@ class StartupState implements Disposable {
   Future<void> init() async {
     try {
       status.value = RegistrationStatus.loading;
+      
+      // Clean up local sales older than 2 weeks on startup
+      await LocalSalesStorage.cleanUpOldSales();
+
       final hwId = await _service.getOrGenerateHardwareId();
       hardwareId.value = hwId;
 

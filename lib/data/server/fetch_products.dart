@@ -35,7 +35,5 @@ AsyncResult<List<Product>> fetchProducts() async {
     ),
   );
 
-  debugPrint("Products fetched: ${products.toList()}");
-
   return products.toList().toSuccess();
 }

@@ -36,13 +36,19 @@ class RecieptView extends StatelessWidget {
       'yyyy-MM-dd HH:mm',
     ).format(DateTime.now());
 
+    final paperType = printerStateRef(context).paperType.value;
+    final pageFormat = PdfPageFormat(
+      paperType.width * PdfPageFormat.mm,
+      double.infinity,
+      marginTop: 5 * PdfPageFormat.mm,
+      marginBottom: 5 * PdfPageFormat.mm,
+      marginLeft: 5 * PdfPageFormat.mm,
+      marginRight: paperType == PaperType.xmPaper ? 24 * PdfPageFormat.mm : 5 * PdfPageFormat.mm,
+    );
+
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat(
-          3 * PdfPageFormat.inch,
-          double.infinity,
-          marginAll: 5 * PdfPageFormat.mm,
-        ),
+        pageFormat: pageFormat,
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -282,6 +288,32 @@ class RecieptView extends StatelessWidget {
                       },
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Paper Size',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<PaperType>(
+                    segments: [
+                      ButtonSegment<PaperType>(
+                        value: PaperType.mm58,
+                        label: Text(PaperType.mm58.displayName),
+                      ),
+                      ButtonSegment<PaperType>(
+                        value: PaperType.mm80,
+                        label: Text(PaperType.mm80.displayName),
+                      ),
+                      ButtonSegment<PaperType>(
+                        value: PaperType.xmPaper,
+                        label: Text(PaperType.xmPaper.displayName),
+                      ),
+                    ],
+                    selected: {printerState.paperType.value},
+                    onSelectionChanged: (Set<PaperType> newSelection) {
+                      printerState.setPaperType(newSelection.first);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -345,19 +377,27 @@ class RecieptView extends StatelessWidget {
             }),
           ],
         ),
-        body: PdfPreview(
-          initialPageFormat: PdfPageFormat(
-            3 * PdfPageFormat.inch,
+        body: Watch((context) {
+          final paperType = printerStateRef(context).paperType.value;
+          final pageFormat = PdfPageFormat(
+            paperType.width * PdfPageFormat.mm,
             double.infinity,
-            marginAll: 5 * PdfPageFormat.mm,
-          ),
-          maxPageWidth: 400,
-          useActions: false,
-          build: (format) async {
-            final doc = await generateReciept(context);
-            return doc.save();
-          },
-        ),
+            marginTop: 5 * PdfPageFormat.mm,
+            marginBottom: 5 * PdfPageFormat.mm,
+            marginLeft: 5 * PdfPageFormat.mm,
+            marginRight: paperType == PaperType.xmPaper ? 24 * PdfPageFormat.mm : 5 * PdfPageFormat.mm,
+          );
+
+          return PdfPreview(
+            initialPageFormat: pageFormat,
+            maxPageWidth: 400,
+            useActions: false,
+            build: (format) async {
+              final doc = await generateReciept(context);
+              return doc.save();
+            },
+          );
+        }),
         floatingActionButton: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -13,6 +13,7 @@ import 'package:pos_terminal/views/dialogs/change_quantity.dialog.dart';
 import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
 import 'package:pos_terminal/views/dialogs/pick_price_modifiers.dialog.dart';
 import 'package:pos_terminal/views/dialogs/resume_transaction.dialog.dart';
+import 'package:pos_terminal/views/dialogs/sales_history.dialog.dart';
 import 'package:signals/signals_flutter.dart';
 
 class MakeTransactionView extends StatelessWidget {
@@ -70,7 +71,11 @@ class MakeTransactionView extends StatelessWidget {
                         value: Colors.deepPurple,
                         child: Row(
                           children: [
-                            Container(width: 16, height: 16, color: Colors.deepPurple),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              color: Colors.deepPurple,
+                            ),
                             const SizedBox(width: 8),
                             const Text("Deep Purple"),
                           ],
@@ -80,7 +85,11 @@ class MakeTransactionView extends StatelessWidget {
                         value: Colors.blue,
                         child: Row(
                           children: [
-                            Container(width: 16, height: 16, color: Colors.blue),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              color: Colors.blue,
+                            ),
                             const SizedBox(width: 8),
                             const Text("Blue"),
                           ],
@@ -90,7 +99,11 @@ class MakeTransactionView extends StatelessWidget {
                         value: Colors.teal,
                         child: Row(
                           children: [
-                            Container(width: 16, height: 16, color: Colors.teal),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              color: Colors.teal,
+                            ),
                             const SizedBox(width: 8),
                             const Text("Teal"),
                           ],
@@ -100,7 +113,11 @@ class MakeTransactionView extends StatelessWidget {
                         value: Colors.green,
                         child: Row(
                           children: [
-                            Container(width: 16, height: 16, color: Colors.green),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 8),
                             const Text("Green"),
                           ],
@@ -110,7 +127,11 @@ class MakeTransactionView extends StatelessWidget {
                         value: Colors.orange,
                         child: Row(
                           children: [
-                            Container(width: 16, height: 16, color: Colors.orange),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              color: Colors.orange,
+                            ),
                             const SizedBox(width: 8),
                             const Text("Orange"),
                           ],
@@ -128,13 +149,25 @@ class MakeTransactionView extends StatelessWidget {
                       ),
                     ],
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.history),
+                    tooltip: 'Sales History',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const SalesHistoryDialog(),
+                      );
+                    },
+                  ),
                   const SizedBox(width: 16),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     tooltip: 'Refresh Data',
                     onPressed: () async {
                       await fetchDataRef(context).load();
-                      productsLoadedRef(context).load(fetchDataRef(context).products.value);
+                      productsLoadedRef(
+                        context,
+                      ).load(fetchDataRef(context).products.value);
                     },
                   ),
                   const SizedBox(width: 16),
@@ -168,7 +201,8 @@ class MakeTransactionView extends StatelessWidget {
 
           // Ctrl+Enter or End to complete transaction
           if (event.logicalKey == LogicalKeyboardKey.end ||
-              (event.logicalKey == LogicalKeyboardKey.enter && HardwareKeyboard.instance.isControlPressed)) {
+              (event.logicalKey == LogicalKeyboardKey.enter &&
+                  HardwareKeyboard.instance.isControlPressed)) {
             if (cartState.cart.isNotEmpty) {
               cartState.customerMoney.value = null;
               showDialog(
@@ -219,7 +253,8 @@ class MakeTransactionView extends StatelessWidget {
 
           // DEL to remove item
           if (event.logicalKey == LogicalKeyboardKey.delete) {
-            if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
+            if (cartState.cart.isNotEmpty &&
+                cartState.cartCursorIndex.value < cartState.cart.length) {
               final item = cartState.cart[cartState.cartCursorIndex.value];
               cartState.removeFromCart(product: item.product);
             }
@@ -228,8 +263,8 @@ class MakeTransactionView extends StatelessWidget {
 
           // F6 to set quantity
           if (event.logicalKey == LogicalKeyboardKey.f6) {
-
-            if (cartState.cart.isNotEmpty && cartState.cartCursorIndex.value < cartState.cart.length) {
+            if (cartState.cart.isNotEmpty &&
+                cartState.cartCursorIndex.value < cartState.cart.length) {
               final item = cartState.cart[cartState.cartCursorIndex.value];
               showDialog(
                 context: context,
@@ -253,11 +288,13 @@ class MakeTransactionView extends StatelessWidget {
               debugPrint("Product not found");
               return;
             }
-            makeTransactionRef(context).addToCart(product: product, quantity: 1);
+            makeTransactionRef(
+              context,
+            ).addToCart(product: product, quantity: 1);
           },
           child: const Row(
             children: [
-              Flexible(flex: 4, child: ProductListView()),
+              Flexible(flex: 3, child: ProductListView()),
               VerticalDivider(),
               Flexible(
                 flex: 4,
@@ -298,4 +335,3 @@ class MakeTransactionView extends StatelessWidget {
     );
   }
 }
-

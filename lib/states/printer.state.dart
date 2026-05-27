@@ -6,6 +6,33 @@ import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signals/signals_flutter.dart';
 
+enum PaperType {
+  mm58,
+  mm80,
+  xmPaper;
+
+  String get displayName {
+    switch (this) {
+      case PaperType.mm58:
+        return '58mm';
+      case PaperType.mm80:
+        return '80mm';
+      case PaperType.xmPaper:
+        return 'XM Paper';
+    }
+  }
+
+  double get width {
+    switch (this) {
+      case PaperType.mm58:
+        return 58.0;
+      case PaperType.mm80:
+      case PaperType.xmPaper:
+        return 80.0;
+    }
+  }
+}
+
 class PrinterState extends Disposable {
   final BuildContext context;
   PrinterState(this.context);
@@ -13,9 +40,11 @@ class PrinterState extends Disposable {
   final selectedPrinter = signal<Printer?>(null);
   final useDirectPrint = signal<bool>(true);
   final isInitialized = signal<bool>(false);
+  final paperType = signal<PaperType>(PaperType.mm80);
 
   static const String _printerKey = 'saved_printer';
   static const String _directPrintKey = 'use_direct_print';
+  static const String _paperTypeKey = 'paper_type';
 
   /// Initialize and load saved printer from local storage.
   Future<void> init() async {
@@ -26,6 +55,23 @@ class PrinterState extends Disposable {
       
       // Load direct print preference
       useDirectPrint.value = prefs.getBool(_directPrintKey) ?? true;
+
+      // Load paper type preference
+      final savedPaperType = prefs.getString(_paperTypeKey);
+      if (savedPaperType != null) {
+        paperType.value = PaperType.values.firstWhere(
+          (e) => e.name == savedPaperType,
+          orElse: () => PaperType.mm80,
+        );
+      } else {
+        // Fallback for older version which used double paper_size
+        final oldDouble = prefs.getDouble('paper_size');
+        if (oldDouble == 58.0) {
+          paperType.value = PaperType.mm58;
+        } else {
+          paperType.value = PaperType.mm80;
+        }
+      }
 
       // Load printer
       final printerJson = prefs.getString(_printerKey);
@@ -80,6 +126,17 @@ class PrinterState extends Disposable {
       useDirectPrint.value = value;
     } catch (e) {
       debugPrint('Error saving direct print preference: $e');
+    }
+  }
+
+  /// Set paper type preference.
+  Future<void> setPaperType(PaperType type) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_paperTypeKey, type.name);
+      paperType.value = type;
+    } catch (e) {
+      debugPrint('Error saving paper type preference: $e');
     }
   }
 

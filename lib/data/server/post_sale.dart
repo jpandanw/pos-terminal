@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/config.dart';
+import 'package:pos_terminal/services/local_sales_storage.dart';
 import 'package:result_dart/result_dart.dart';
 
 final dio = Dio();
@@ -25,20 +26,25 @@ AsyncResult<bool> postSale({
     final randomNum = Random().nextInt(1000).toString().padLeft(3, '0');
     final saleId = 'TX-$yy$mm$dd$ms-$randomNum';
 
+    final payload = {
+      "saleId": saleId,
+      "hardwareId": terminalId,
+      "cashierId": cashierId,
+      if (customerId != null) "customerId": customerId,
+      "items": items,
+      "modifiers": modifiers,
+      "total": total,
+      "customerCash": customerCash,
+      "customerChange": customerChange,
+    };
+
     await dio.post(
       "$API_URL/terminals/sales/",
-      data: {
-        "saleId": saleId,
-        "hardwareId": terminalId,
-        "cashierId": cashierId,
-        "customerId": ?customerId,
-        "items": items,
-        "modifiers": modifiers,
-        "total": total,
-        "customerCash": customerCash,
-        "customerChange": customerChange,
-      },
+      data: payload,
     );
+
+    await LocalSalesStorage.saveSale(payload);
+
     return true.toSuccess();
   } catch (e) {
     debugPrint("POS ERROR: $e");
