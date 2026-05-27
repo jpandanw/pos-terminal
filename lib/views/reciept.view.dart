@@ -97,7 +97,7 @@ class RecieptView extends StatelessWidget {
                       pw.Text("Name", style: pw.TextStyle(fontSize: 6)),
                       pw.Text("Qty", style: pw.TextStyle(fontSize: 6)),
                       pw.Text("Price", style: pw.TextStyle(fontSize: 6)),
-                      pw.Text("Subtotal", style: pw.TextStyle(fontSize: 6)),
+                      pw.Text("Subttl", style: pw.TextStyle(fontSize: 6)),
                     ],
                   ),
                   ...sortedCart.map((item) {
