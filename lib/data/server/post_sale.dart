@@ -38,10 +38,7 @@ AsyncResult<bool> postSale({
       "customerChange": customerChange,
     };
 
-    await dio.post(
-      "$API_URL/terminals/sales/",
-      data: payload,
-    );
+    await dio.post("$API_URL/terminals/sales", data: payload);
 
     await LocalSalesStorage.saveSale(payload);
 

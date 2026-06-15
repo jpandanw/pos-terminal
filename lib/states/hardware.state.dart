@@ -2,6 +2,7 @@ import 'package:lite_ref/lite_ref.dart';
 import 'package:pos_terminal/services/local_sales_storage.dart';
 import 'package:pos_terminal/services/startup.service.dart';
 import 'package:signals/signals_core.dart';
+import 'package:uuid/v7.dart';
 
 final startupStateRef = Ref.scoped((context) => StartupState());
 
@@ -35,19 +36,47 @@ class StartupState implements Disposable {
     }
   }
 
-  /// Register the hardware with name and optional location.
-  Future<void> register({required String name, String? location}) async {
+  /// Register the hardware with name, optional location, and hardware ID.
+  Future<void> register({
+    required String name,
+    required String hardwareIdVal,
+    String? location,
+  }) async {
     try {
       status.value = RegistrationStatus.loading;
-      final hwId = hardwareId.value!;
+      final cleanId = hardwareIdVal.trim();
+      final finalId = cleanId.isEmpty ? UuidV7().generate() : cleanId;
+
+      await _service.saveHardwareId(finalId);
+      hardwareId.value = finalId;
 
       await _service.registerHardware(
-        hardwareId: hwId,
+        hardwareId: finalId,
         name: name,
         location: location,
       );
 
       status.value = RegistrationStatus.registered;
+    } catch (e) {
+      errorMessage.value = e.toString();
+      status.value = RegistrationStatus.error;
+    }
+  }
+
+  /// Save/update the hardware ID and re-verify registration status.
+  Future<void> updateHardwareId(String newId) async {
+    try {
+      status.value = RegistrationStatus.loading;
+      final cleanId = newId.trim();
+      final finalId = cleanId.isEmpty ? UuidV7().generate() : cleanId;
+
+      await _service.saveHardwareId(finalId);
+      hardwareId.value = finalId;
+
+      final isRegistered = await _service.isHardwareRegistered(finalId);
+      status.value = isRegistered
+          ? RegistrationStatus.registered
+          : RegistrationStatus.notRegistered;
     } catch (e) {
       errorMessage.value = e.toString();
       status.value = RegistrationStatus.error;

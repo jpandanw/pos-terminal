@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/auth.state.dart';
+import 'package:pos_terminal/states/hardware.state.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:uuid/v7.dart';
 
 final _showPassword = signal(false);
 final _isLoading = signal(false);
@@ -175,12 +177,121 @@ class _LoginViewState extends State<LoginView> {
                           : const Text("LOGIN"),
                     ),
                   ),
+                  const Divider(),
+                  Watch((_) {
+                    final hwState = startupStateRef(context);
+                    final currentId = hwState.hardwareId.value ?? 'None';
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Terminal ID / Hardware ID",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                currentId,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _isLoading.value
+                              ? null
+                              : () => _showUpdateTerminalIdDialog(context, currentId),
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text("Change", style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showUpdateTerminalIdDialog(BuildContext context, String currentId) {
+    final controller = TextEditingController(text: currentId);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (statefulContext, setDialogState) {
+            return AlertDialog(
+              title: const Text("Change Terminal ID"),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Updating the Terminal ID will check registration status. If the ID is not registered, you will be prompted to register it.",
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: "Terminal ID",
+                        hintText: "Enter custom terminal ID or generate one",
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.autorenew_rounded),
+                          tooltip: "Generate New ID",
+                          onPressed: () {
+                            setDialogState(() {
+                              controller.text = UuidV7().generate();
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Terminal ID is required";
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text("CANCEL"),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+                    final newId = controller.text.trim();
+                    Navigator.of(dialogContext).pop();
+                    
+                    // Call updateHardwareId from startupStateRef
+                    await startupStateRef(context).updateHardwareId(newId);
+                  },
+                  child: const Text("UPDATE"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

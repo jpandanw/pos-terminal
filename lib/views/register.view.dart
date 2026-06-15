@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_terminal/states/hardware.state.dart';
+import 'package:uuid/v7.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -11,13 +12,31 @@ class RegisterView extends StatefulWidget {
 class _RegisterViewState extends State<RegisterView> {
   final nameCtrl = TextEditingController();
   final locationCtrl = TextEditingController();
+  late final TextEditingController terminalIdCtrl;
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
+  bool _isInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _isInitialized = true;
+      final currentId = startupStateRef(context).hardwareId.value ?? '';
+      terminalIdCtrl = TextEditingController(text: currentId);
+      if (currentId.trim().isEmpty) {
+        terminalIdCtrl.text = UuidV7().generate();
+      }
+    }
+  }
 
   @override
   void dispose() {
     nameCtrl.dispose();
     locationCtrl.dispose();
+    if (_isInitialized) {
+      terminalIdCtrl.dispose();
+    }
     super.dispose();
   }
 
@@ -28,6 +47,7 @@ class _RegisterViewState extends State<RegisterView> {
 
     await startupStateRef(context).register(
       name: nameCtrl.text.trim(),
+      hardwareIdVal: terminalIdCtrl.text.trim(),
       location: locationCtrl.text.trim().isEmpty
           ? null
           : locationCtrl.text.trim(),
@@ -81,6 +101,32 @@ class _RegisterViewState extends State<RegisterView> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
+                    TextFormField(
+                      controller: terminalIdCtrl,
+                      decoration: InputDecoration(
+                        labelText: "Terminal ID (Hardware ID)",
+                        hintText: "Enter custom terminal ID or generate one",
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.autorenew_rounded),
+                          tooltip: "Generate New ID",
+                          onPressed: () {
+                            setState(() {
+                              terminalIdCtrl.text = UuidV7().generate();
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Terminal ID is required";
+                        }
+                        return null;
+                      },
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: nameCtrl,
                       decoration: const InputDecoration(

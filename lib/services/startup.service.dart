@@ -9,13 +9,14 @@ class StartupService {
 
   Future<bool> hasHardwareId() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey("hardware_id");
+    final id = prefs.getString("hardware_id");
+    return id != null && id.trim().isNotEmpty;
   }
 
   Future<String> getOrGenerateHardwareId() async {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getString("hardware_id");
-    if (existing != null) return existing;
+    if (existing != null && existing.trim().isNotEmpty) return existing;
 
     final hardwareId = UuidV7().generate();
     await prefs.setString("hardware_id", hardwareId);
@@ -25,7 +26,17 @@ class StartupService {
   Future<String> getHardwareId() async {
     final prefs = await SharedPreferences.getInstance();
     final hardwareId = prefs.getString("hardware_id");
-    return hardwareId!;
+    if (hardwareId == null || hardwareId.trim().isEmpty) {
+      final generated = UuidV7().generate();
+      await prefs.setString("hardware_id", generated);
+      return generated;
+    }
+    return hardwareId;
+  }
+
+  Future<void> saveHardwareId(String hardwareId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("hardware_id", hardwareId.trim());
   }
 
   /// Check if hardware is registered on the server.
@@ -48,19 +59,19 @@ class StartupService {
   }
 
   /// Register hardware on the server.
-  /// POST /api/terminals/
-  /// Body: { hardwareId, name, location? }
+  /// POST /api/terminals
+  /// Body: { hardwareId, name, location }
   Future<void> registerHardware({
     required String hardwareId,
     required String name,
     String? location,
   }) async {
     await _dio.post(
-      "$API_URL/terminals/",
+      "$API_URL/terminals",
       data: {
         "hardwareId": hardwareId,
         "name": name,
-        if (location != null && location.isNotEmpty) "location": location,
+        "location": location ?? "",
       },
     );
   }

@@ -27,8 +27,9 @@ AsyncResult<LoginResponse> login({
 }) async {
   try {
     debugPrint("Attempting login with email: $email");
+
     final response = await dio.post(
-      "$API_URL/login",
+      "$API_URL/terminals/login",
       data: {"email": email, "password": password},
     );
 

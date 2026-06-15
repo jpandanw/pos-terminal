@@ -73,72 +73,75 @@ class _MyAppState extends State<MyApp> {
               }
 
               return Watch((_) {
-                final regStatus = startupStateRef(context).status.value;
+                final authState = authStateRef(context);
+                final isLoggedIn = authState.cashier.value != null;
+                final isReady = authState.isReady.value;
 
-                return switch (regStatus) {
-                  RegistrationStatus.loading => const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  ),
-                  RegistrationStatus.notRegistered => const RegisterView(),
-                  RegistrationStatus.error => Scaffold(
-                    body: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Failed to check registration",
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            startupStateRef(context).errorMessage.value ??
-                                "Unknown error",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          FilledButton.icon(
-                            onPressed: () => startupStateRef(context).init(),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text("RETRY"),
-                          ),
-                        ],
+                if (!isLoggedIn) {
+                  return const LoginView();
+                }
+
+                return Watch((_) {
+                  final regStatus = startupStateRef(context).status.value;
+
+                  return switch (regStatus) {
+                    RegistrationStatus.loading => const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    ),
+                    RegistrationStatus.notRegistered => const RegisterView(),
+                    RegistrationStatus.error => Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Failed to check registration",
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              startupStateRef(context).errorMessage.value ??
+                                  "Unknown error",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton.icon(
+                              onPressed: () => startupStateRef(context).init(),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text("RETRY"),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  RegistrationStatus.registered => Watch((_) {
-                    final authState = authStateRef(context);
-                    final isLoggedIn = authState.cashier.value != null;
-                    final isReady = authState.isReady.value;
-
-                    if (!isLoggedIn) {
-                      return const LoginView();
-                    }
-
-                    if (isLoggedIn && !isReady) {
-                      return const Scaffold(
-                        body: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Loading data...'),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    return const MakeTransactionView();
-                  }),
-                };
+                    RegistrationStatus.registered => Builder(
+                      builder: (context) {
+                        if (!isReady) {
+                          return const Scaffold(
+                            body: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text('Loading data...'),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return const MakeTransactionView();
+                      },
+                    ),
+                  };
+                });
               });
             },
           ),
