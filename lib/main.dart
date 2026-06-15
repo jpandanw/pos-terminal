@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ref/lite_ref.dart';
+import 'package:pos_terminal/config.dart';
 import 'package:pos_terminal/states/auth.state.dart';
 import 'package:pos_terminal/states/hardware.state.dart';
 import 'package:pos_terminal/states/theme.state.dart';
@@ -12,6 +13,7 @@ import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initApiUrl();
 
   if (!kIsWeb) {
     await windowManager.ensureInitialized();

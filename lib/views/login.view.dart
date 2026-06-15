@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_terminal/config.dart';
 import 'package:pos_terminal/states/auth.state.dart';
 import 'package:pos_terminal/states/hardware.state.dart';
 import 'package:signals/signals_flutter.dart';
