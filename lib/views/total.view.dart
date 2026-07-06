@@ -54,13 +54,18 @@ class TotalView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text("Total:"),
-            Watch(
-              (_) => Text(
-                "P${cartState.overallTotal.value.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontFamily: "monospace",
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
+            Card(
+              color: Theme.of(context).primaryColor,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Watch(
+                  (_) => Text(
+                    "P${cartState.overallTotal.value.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 100,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),
