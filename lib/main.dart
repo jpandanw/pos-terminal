@@ -13,7 +13,7 @@ import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initApiUrl();
+  // await initApiUrl();
 
   if (!kIsWeb) {
     await windowManager.ensureInitialized();

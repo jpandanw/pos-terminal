@@ -6,9 +6,12 @@ import 'package:pos_terminal/types/product.type.dart';
 import 'package:pos_terminal/views/make_transactions_actions.view.dart';
 import 'package:signals/signals_flutter.dart';
 
-final _selectedCategory = signal<String?>(null);
-final _searchQuery = signal<String>('');
+final selectedCategory = signal<String?>(null);
+final searchModeActive = signal<bool>(false);
+final searchCursorIndex = signal<int>(0);
 final searchFocusNode = FocusNode();
+final searchQuery = signal<String>('');
+final mainFocusNode = FocusNode();
 
 class ProductListView extends StatefulWidget {
   const ProductListView({super.key});
@@ -19,28 +22,91 @@ class ProductListView extends StatefulWidget {
 
 class _ProductListViewState extends State<ProductListView> {
   final _searchController = SearchController();
+  final _scrollController = ScrollController();
+  EffectCleanup? _effectCleanup;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
       untracked(() {
-        _searchQuery.value = _searchController.text;
+        searchQuery.value = _searchController.text;
+        searchCursorIndex.value = 0; // reset selection when query changes
       });
     });
+
+    searchFocusNode.addListener(_onFocusChanged);
+
+    _effectCleanup = effect(() {
+      final index = searchCursorIndex.value;
+      _scrollToIndex(index);
+    });
+  }
+
+  void _onFocusChanged() {
+    if (searchFocusNode.hasFocus) {
+      untracked(() {
+        searchModeActive.value = true;
+        // Select all text in the controller
+        _searchController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _searchController.text.length,
+        );
+      });
+    } else {
+      untracked(() {
+        searchModeActive.value = false;
+        _clearSearch();
+      });
+      mainFocusNode.requestFocus();
+    }
   }
 
   @override
   void dispose() {
+    _effectCleanup?.call();
+    searchFocusNode.removeListener(_onFocusChanged);
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _clearSearch() {
     _searchController.clear();
     untracked(() {
-      _searchQuery.value = '';
+      searchQuery.value = '';
+      searchCursorIndex.value = 0;
     });
+  }
+
+  void _exitSearchMode() {
+    _clearSearch();
+    searchFocusNode.unfocus();
+    mainFocusNode.requestFocus();
+    untracked(() {
+      searchModeActive.value = false;
+    });
+  }
+
+  void _scrollToIndex(int index) {
+    if (!_scrollController.hasClients) return;
+    const itemHeight = 72.0; // estimate height of card/listtile
+    final position = index * itemHeight;
+    final viewportHeight = _scrollController.position.viewportDimension;
+    final currentScroll = _scrollController.offset;
+    if (position < currentScroll) {
+      _scrollController.animateTo(
+        position,
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
+      );
+    } else if (position + itemHeight > currentScroll + viewportHeight) {
+      _scrollController.animateTo(
+        position + itemHeight - viewportHeight,
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -49,59 +115,105 @@ class _ProductListViewState extends State<ProductListView> {
     return Column(
       spacing: 16,
       children: [
-        SearchBar(
-          controller: _searchController,
-          focusNode: searchFocusNode,
-          hintText: 'Search Product Name, SKU, or Barcode...',
-          leading: Badge(
-            label: const Text("/", style: TextStyle(fontWeight: FontWeight.bold)),
-            alignment: Alignment.topLeft,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            child: const Icon(Icons.search),
-          ),
-          onSubmitted: (value) {
-            if (value.isNotEmpty) {
-              final results = productsLoadedRef(context).searchProducts(value);
-              if (results.isNotEmpty) {
-                makeTransactionRef(context).addToCart(
-                  product: results.first,
-                  quantity: 1,
-                );
-                _clearSearch();
-                searchFocusNode.unfocus();
-              }
-            }
-          },
-          trailing: [
-            Watch((context) {
-              final query = _searchQuery.value;
-              if (query.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: 'Clear search',
-                onPressed: _clearSearch,
-              );
-            }),
-          ],
-        ),
+        Watch((context) {
+          final isActive = searchModeActive.value;
+          final colorScheme = Theme.of(context).colorScheme;
+
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      )
+                    ]
+                  : null,
+            ),
+            child: SearchBar(
+              controller: _searchController,
+              focusNode: searchFocusNode,
+              hintText: isActive
+                  ? 'SEARCH MODE ACTIVE - Type to filter...'
+                  : 'Search Product Name, SKU, or Barcode...',
+              leading: Badge(
+                label: Text(
+                  isActive ? "ESC" : "/",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+                ),
+                alignment: Alignment.topLeft,
+                backgroundColor: isActive
+                    ? colorScheme.error
+                    : colorScheme.secondary,
+                child: Icon(
+                  Icons.search,
+                  color: isActive ? colorScheme.primary : null,
+                ),
+              ),
+              side: WidgetStateProperty.all(
+                BorderSide(
+                  color: isActive ? colorScheme.primary : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  final results = productsLoadedRef(context).searchProducts(value);
+                  if (results.isNotEmpty) {
+                    final selectedIndex = searchCursorIndex.value;
+                    final targetProduct = (selectedIndex >= 0 && selectedIndex < results.length)
+                        ? results[selectedIndex]
+                        : results.first;
+                    makeTransactionRef(context).addToCart(
+                      product: targetProduct,
+                      quantity: 1,
+                    );
+                    _exitSearchMode();
+                  }
+                }
+              },
+              trailing: [
+                Watch((context) {
+                  final query = searchQuery.value;
+                  if (query.isEmpty) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: const Icon(Icons.clear),
+                    tooltip: 'Clear search',
+                    onPressed: _clearSearch,
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
         Expanded(
           child: Watch((context) {
-            final query = _searchQuery.value;
-            final selectedCategory = _selectedCategory.value;
+            final query = searchQuery.value;
+            final currentSelectedCategory = selectedCategory.value;
             final categories = fetchData.categories.value;
 
             // — Search mode: show results globally across all products —
             if (query.isNotEmpty) {
               final results =
                   productsLoadedRef(context).searchProducts(query);
-              return _ProductList(
+              return _SearchProductList(
                 products: results,
+                scrollController: _scrollController,
                 emptyMessage: 'No products match "$query"',
+                onSelected: (product) {
+                  makeTransactionRef(context).addToCart(
+                    product: product,
+                    quantity: 1,
+                  );
+                  _exitSearchMode();
+                },
               );
             }
 
             // — Category not yet selected: show category grid —
-            if (selectedCategory == null) {
+            if (currentSelectedCategory == null) {
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 6,
@@ -112,7 +224,7 @@ class _ProductListViewState extends State<ProductListView> {
                     return _UncategorizedCard(
                       onClick: () {
                         untracked(() {
-                          _selectedCategory.value = 'uncategorized';
+                          selectedCategory.value = 'uncategorized';
                         });
                       },
                     );
@@ -121,7 +233,7 @@ class _ProductListViewState extends State<ProductListView> {
                     category: categories[index],
                     onClick: () {
                       untracked(() {
-                        _selectedCategory.value = categories[index].id;
+                        selectedCategory.value = categories[index].id;
                       });
                     },
                   );
@@ -132,24 +244,32 @@ class _ProductListViewState extends State<ProductListView> {
             // — Category selected: show its products —
             final productList =
                 productsLoadedRef(context).getProductsByCategory(
-              selectedCategory,
+              currentSelectedCategory,
             );
             return Scaffold(
               appBar: AppBar(
                 leading: TextButton.icon(
                   onPressed: () {
                     untracked(() {
-                      _selectedCategory.value = null;
+                      selectedCategory.value = null;
                     });
                     _clearSearch();
                   },
                   label: const Icon(Icons.arrow_left_rounded),
                 ),
-                title: Text(_getCategoryName(categories, selectedCategory)),
+                title: Text(_getCategoryName(categories, currentSelectedCategory)),
               ),
-              body: _ProductList(
+              body: _SearchProductList(
                 products: productList,
+                scrollController: _scrollController,
                 emptyMessage: 'No products in this category',
+                onSelected: (product) {
+                  makeTransactionRef(context).addToCart(
+                    product: product,
+                    quantity: 1,
+                  );
+                  _exitSearchMode();
+                },
               ),
             );
           }),
@@ -170,16 +290,26 @@ class _ProductListViewState extends State<ProductListView> {
   }
 }
 
-// ── Shared product list widget ────────────────────────────────────────────────
+// ── Shared product list widget with selection support ──────────────────────────
 
-class _ProductList extends StatelessWidget {
-  const _ProductList({required this.products, required this.emptyMessage});
+class _SearchProductList extends StatelessWidget {
+  const _SearchProductList({
+    required this.products,
+    required this.scrollController,
+    required this.emptyMessage,
+    required this.onSelected,
+  });
 
   final List<Product> products;
+  final ScrollController scrollController;
   final String emptyMessage;
+  final ValueChanged<Product> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (products.isEmpty) {
       return Center(
         child: Column(
@@ -196,25 +326,51 @@ class _ProductList extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return Card(
-          child: ListTile(
-            title: Text(product.name),
-            subtitle: Text('Barcode: ${product.barcode ?? '-'} | SKU: ${product.sku ?? '-'}'),
-            trailing: Text('P${product.price.toStringAsFixed(2)}'),
-            onTap: () {
-              makeTransactionRef(context).addToCart(
-                product: product,
-                quantity: 1,
-              );
-            },
-          ),
-        );
-      },
-    );
+    return Watch((context) {
+      final selectedIndex = searchCursorIndex.value;
+      final isActive = searchModeActive.value;
+
+      return ListView.builder(
+        controller: scrollController,
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          final isSelected = isActive && index == selectedIndex;
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? colorScheme.primaryContainer
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected
+                    ? colorScheme.primary
+                    : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: ListTile(
+              title: Text(
+                product.name,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              subtitle: Text(
+                'Barcode: ${product.barcode ?? '-'} | SKU: ${product.sku ?? '-'}',
+              ),
+              trailing: Text(
+                'P${product.price.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onTap: () => onSelected(product),
+            ),
+          );
+        },
+      );
+    });
   }
 }
 

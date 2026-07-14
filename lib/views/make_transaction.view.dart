@@ -14,6 +14,7 @@ import 'package:pos_terminal/views/dialogs/customer_money.dialog.dart';
 import 'package:pos_terminal/views/dialogs/pick_price_modifiers.dialog.dart';
 import 'package:pos_terminal/views/dialogs/resume_transaction.dialog.dart';
 import 'package:pos_terminal/views/dialogs/sales_history.dialog.dart';
+import 'package:pos_terminal/types/product.type.dart';
 import 'package:signals/signals_flutter.dart';
 
 class MakeTransactionView extends StatelessWidget {
@@ -185,13 +186,70 @@ class MakeTransactionView extends StatelessWidget {
         ],
       ),
       body: Focus(
+        focusNode: mainFocusNode,
         autofocus: true,
         onKeyEvent: (node, event) {
           if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
           final cartState = makeTransactionRef(context);
 
-          // "/" to focus search
+          // If search mode is active, intercept arrow keys, Escape, and Enter for search.
+          if (searchModeActive.value) {
+            final query = searchQuery.value;
+            final category = selectedCategory.value;
+            final results = query.isNotEmpty
+                ? productsLoadedRef(context).searchProducts(query)
+                : (category != null
+                    ? productsLoadedRef(context).getProductsByCategory(category)
+                    : <Product>[]);
+
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              if (results.isNotEmpty) {
+                untracked(() {
+                  searchCursorIndex.value =
+                      (searchCursorIndex.value + 1).clamp(0, results.length - 1);
+                });
+              }
+              return KeyEventResult.handled;
+            }
+
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              if (results.isNotEmpty) {
+                untracked(() {
+                  searchCursorIndex.value =
+                      (searchCursorIndex.value - 1).clamp(0, results.length - 1);
+                });
+              }
+              return KeyEventResult.handled;
+            }
+
+            if (event.logicalKey == LogicalKeyboardKey.escape) {
+              untracked(() {
+                searchModeActive.value = false;
+                searchFocusNode.unfocus();
+              });
+              return KeyEventResult.handled;
+            }
+
+            if (event.logicalKey == LogicalKeyboardKey.enter) {
+              if (results.isNotEmpty) {
+                final index = searchCursorIndex.value;
+                if (index >= 0 && index < results.length) {
+                  cartState.addToCart(
+                    product: results[index],
+                    quantity: 1,
+                  );
+                }
+              }
+              untracked(() {
+                searchModeActive.value = false;
+                searchFocusNode.unfocus();
+              });
+              return KeyEventResult.handled;
+            }
+          }
+
+          // "/" to enter search mode
           if (event.logicalKey == LogicalKeyboardKey.slash) {
             if (!searchFocusNode.hasFocus) {
               searchFocusNode.requestFocus();

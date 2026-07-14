@@ -13,7 +13,7 @@ RUN flutter pub get
 COPY . .
 
 # Build the web application
-RUN flutter build web --release --no-tree-shake-icons
+RUN flutter build web --release --no-tree-shake-icons --wasm
 
 # Stage 2: Serve the application using NGINX
 FROM nginx:alpine

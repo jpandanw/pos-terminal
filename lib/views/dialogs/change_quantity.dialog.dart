@@ -22,8 +22,13 @@ class _ChangeQuantityDialogState extends State<ChangeQuantityDialog> {
   @override
   void initState() {
     super.initState();
+    final text = widget.currentQuantity.toString();
     _controller = TextEditingController(
-      text: widget.currentQuantity.toString(),
+      text: text,
+    );
+    _controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: text.length,
     );
   }
 

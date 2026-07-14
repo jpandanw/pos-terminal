@@ -54,20 +54,21 @@ class TotalView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text("Total:"),
-            Card(
-              color: Theme.of(context).primaryColor,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Watch(
-                  (_) => Text(
-                    "P${cartState.overallTotal.value.toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontSize: 100,
-                      fontWeight: FontWeight.w600,
-                    ),
+            Watch(
+              (_) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final priceColor = isDark
+                    ? Colors.greenAccent.shade400
+                    : Colors.green.shade800;
+                return Text(
+                  "P${cartState.overallTotal.value.toStringAsFixed(2)}",
+                  style: TextStyle(
+                    fontSize: 100,
+                    fontWeight: FontWeight.w600,
+                    color: priceColor,
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

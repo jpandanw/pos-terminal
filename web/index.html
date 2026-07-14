@@ -34,6 +34,19 @@
 
   <!-- API Server Base URL (Leave empty to dynamically fall back to the host origin) -->
   <meta name="api-url" content="">
+  <script>
+    window.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F5' || e.keyCode === 116 ||
+        e.key === 'F7' || e.keyCode === 118 ||
+        (e.ctrlKey && (e.key === 'r' || e.key === 'R' || e.keyCode === 82)) ||
+        (e.ctrlKey && (e.key === 'j' || e.key === 'J' || e.keyCode === 74))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  </script>
 </head>
 <body>
   <!--

@@ -9,5 +9,5 @@ services:
     ports:
       - "8080:80"
     environment:
-      - API_URL=http://localhost:5173/api
+      - API_URL=http://localhost:3000
     restart: always
